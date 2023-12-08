@@ -9,7 +9,7 @@
 /* 默认提供的插件API */
 const { common, utils, crypto, events, nets, permissions } = window.lessAPI
 const { Category, Playlist, Track, Album, Lyric } = common
-const { toTrimString, getImageUrlByQuality, nextInt, } = utils
+const { toTrimString, getImageUrlByQuality, nextInt, stringEquals, } = utils
 const { base64Parse, base64Stringify, hexDecode, randomTextDefault, } = crypto
 const { APIEvents, register, unregister } = events
 const { getDoc, getJson, postJson, getInternalIpv4 } = nets
@@ -160,7 +160,7 @@ const vkeyReqBody = (trackInfo, type) => {
     }
 }
 
-export class DouBan {
+class DouBan {
     static CODE = 'douban'
     static MHZ_CODE = 'MHZ'
     static TAG_PLAYLIST_CODE = 'T_PLAYLIST'
@@ -773,7 +773,7 @@ export class DouBan {
                 songs.forEach(item => {
                     const song = item
                     const artist = song.singer.map(ar => {
-                        if (ar.id === id) {
+                        if (stringEquals(ar.id, id)) {
                             if (result.title === '未知歌手') {
                                 Object.assign(result, {
                                     title: ar.name || ar.title
