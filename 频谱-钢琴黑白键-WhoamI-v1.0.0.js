@@ -15,14 +15,14 @@ const { APIEvents, register, unregister } = events
 
 /* 自由开发代码区 */
 class WhiteKey {
-    constructor(name, tone, x, y, width, height) {
+    constructor(name, tone, x, y, width, height, arcRadius) {
         this.name = name
         this.tone = tone
         this.x = x
         this.y = y
         this.width = width
         this.height = height
-        this.arcRadius = 4
+        this.arcRadius = arcRadius
     }
 
     draw(ctx) {
@@ -35,6 +35,19 @@ class WhiteKey {
         //ctx.lineTo(this.x + this.width, this.y)
         ctx.stroke()
     }
+
+    fill(ctx) {
+        ctx.beginPath()
+        ctx.moveTo(this.x, this.y)
+        ctx.lineTo(this.x, this.y + this.height - this.arcRadius)
+        ctx.arcTo(this.x, this.y + this.height,  this.x + this.arcRadius, this.y + this.height ,this.arcRadius)
+        ctx.lineTo(this.x + this.width - 2 * this.arcRadius, this.y + this.height)
+        ctx.arcTo(this.x + this.width, this.y + this.height, this.x + this.width, this.y + this.height - this.arcRadius, this.arcRadius)
+        ctx.lineTo(this.x + this.width, this.y)
+        ctx.closePath()
+        ctx.stroke()
+        ctx.fill()
+    }
 }
 
 class BlackKey {
@@ -45,7 +58,6 @@ class BlackKey {
         this.y = y
         this.width = width
         this.height = height
-        this.arcRadius = 4
     }
 
     draw(ctx) {
@@ -54,7 +66,7 @@ class BlackKey {
 }
 
 
-const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, spectrumColor, stroke }) => {
+const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, spectrumColor, stroke, isSimpleLayoutMode }) => {
     const { width: cWidth, height: cHeight } = canvas
 
     const canvasCtx = canvas.getContext("2d")
@@ -69,20 +81,21 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
     //canvasCtx.shadowBlur = 3
     //canvasCtx.shadowColor = stroke
 
-    canvasCtx.beginPath()
-    canvasCtx.moveTo(0, 0)
-    canvasCtx.lineTo(cWidth, 0)
-    canvasCtx.stroke()
-
-    const wkw = 13
+    //简约布局，设置不一样的大小
+    const arcRadius = 4
+    const wkw = isSimpleLayoutMode ? 16 : 13
     const wkh = cHeight - 3
-    const bkw = 9
+    const bkw = isSimpleLayoutMode ? (wkw * 9 / 13) : 9
     const bkh = wkh * 0.618
+
     let wkeyFill = 0, bkeyFill = 0
     for (var i = 0; i < 52; i++) {
+        if(i * wkw >= cWidth) break
+        
         canvasCtx.fillStyle = '#ffffff'
-        const wkey = new WhiteKey(i, i, i * wkw, 0, wkw, wkh)
+        const wkey = new WhiteKey(i, i, i * wkw, 0, wkw, wkh, arcRadius)
         wkey.draw(canvasCtx)
+        wkey.fill(canvasCtx)
 
         if(i < 1) continue
         let x = 0, j = (i - 3)
@@ -97,6 +110,13 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
         const bkey = new BlackKey(i, i, x, 0, bkw, bkh)
         bkey.draw(canvasCtx)
     }
+
+    canvasCtx.strokeStyle = '#333333'
+    canvasCtx.beginPath()
+    canvasCtx.moveTo(0, wkh - arcRadius + 1)
+    canvasCtx.lineTo(0, 0)
+    canvasCtx.lineTo(cWidth, 0)
+    canvasCtx.stroke()
 }
 
 
