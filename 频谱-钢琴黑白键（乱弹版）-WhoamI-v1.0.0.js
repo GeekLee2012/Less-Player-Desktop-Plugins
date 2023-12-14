@@ -2,7 +2,7 @@
  * @name 频谱 - 钢琴黑白键（乱弹版）
  * @version 1.0.0
  * @author WhoamI
- * @about Demo
+ * @about 
  * @repository 
  */
 
@@ -66,6 +66,16 @@ class BlackKey {
 }
 
 
+const hitRandom = (factor) => {
+    const limit = 100, modLimit = 30
+    const factorModLimit = parseInt(Math.random(10)) + 20
+    return (nextInt(limit) % modLimit == 3 
+            || nextInt(limit) % modLimit == 5 
+            || nextInt(limit) % modLimit == 7) 
+        && (factor % factorModLimit == 0) 
+}
+
+
 let count = 0
 const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, spectrumColor, stroke, isSimpleLayoutMode }) => {
     const { width: cWidth, height: cHeight } = canvas
@@ -91,14 +101,11 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
     ++count
     let wkeyFill = 0, bkeyFill = 0
     for (var i = 0; i < 52; i++) {
-        if(i * wkw >= cWidth) break
-        
         canvasCtx.fillStyle = '#ffffff'
         const wkey = new WhiteKey(i, i, i * wkw, 0, wkw, wkh, arcRadius)
         wkey.draw(canvasCtx)
         wkey.fill(canvasCtx)
-        if((nextInt(100) % 30 == 3 || nextInt(100) % 30 == 5 || nextInt(100) % 30 == 7) 
-            && (count % 20 == 0) && wkeyFill < 4) {
+        if(hitRandom(count) && wkeyFill < 4) {
             canvasCtx.fillStyle = spectrumColor
             wkey.fill(canvasCtx)
             ++wkeyFill
@@ -115,12 +122,13 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
         }
         canvasCtx.fillStyle = '#000000'
         const bkey = new BlackKey(i, i, x, 0, bkw, bkh)
-        if((nextInt(100) % 30 == 3 || nextInt(100) % 30 == 5 || nextInt(100) % 30 == 7) 
-            && (count % 20 == 0) && bkeyFill < 2) {
+        if(hitRandom(count) && bkeyFill < 2) {
             canvasCtx.fillStyle = stroke
             ++bkeyFill
         }
         bkey.draw(canvasCtx)
+
+        if(i * wkw >= cWidth) break
     }
 
     canvasCtx.strokeStyle = '#333333'

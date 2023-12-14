@@ -2,7 +2,7 @@
  * @name 频谱 - 波形图
  * @version 1.0.0
  * @author WhoamI
- * @about Demo
+ * @about 
  * @repository 
  */
 
@@ -27,6 +27,7 @@ const setupSpectrumColor = (spectrumColor) => {
 }
 
 const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, spectrumColor, stroke }) => {
+    if(!analyser) return
     //计算出采样频率44100所需的缓冲区长度
     const length = freqBinCount * 44100 / sampleRate | 0
     const byteTimeDomainData = new Uint8Array(length)

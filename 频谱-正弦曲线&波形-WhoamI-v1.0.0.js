@@ -2,7 +2,7 @@
  * @name 频谱 - 正弦曲线&波形
  * @version 1.0.0
  * @author WhoamI
- * @about Demo
+ * @about 
  * @repository 
  */
 

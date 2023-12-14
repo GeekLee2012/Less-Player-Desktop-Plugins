@@ -2,7 +2,7 @@
  * @name 频谱 - 钢琴黑白键
  * @version 1.0.0
  * @author WhoamI
- * @about Demo
+ * @about 
  * @repository 
  */
 
@@ -90,8 +90,6 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
 
     let wkeyFill = 0, bkeyFill = 0
     for (var i = 0; i < 52; i++) {
-        if(i * wkw >= cWidth) break
-        
         canvasCtx.fillStyle = '#ffffff'
         const wkey = new WhiteKey(i, i, i * wkw, 0, wkw, wkh, arcRadius)
         wkey.draw(canvasCtx)
@@ -109,6 +107,8 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
         canvasCtx.fillStyle = '#000000'
         const bkey = new BlackKey(i, i, x, 0, bkw, bkh)
         bkey.draw(canvasCtx)
+
+        if(i * wkw >= cWidth) break
     }
 
     canvasCtx.strokeStyle = '#333333'

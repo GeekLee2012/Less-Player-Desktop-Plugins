@@ -2,7 +2,7 @@
  * @name 频谱 - 跳动方块
  * @version 1.0.0
  * @author WhoamI
- * @about Demo
+ * @about 
  * @repository 
  */
 

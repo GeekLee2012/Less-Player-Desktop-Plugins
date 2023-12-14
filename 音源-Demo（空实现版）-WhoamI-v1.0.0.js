@@ -43,6 +43,6 @@ export const activate = () => {
 //插件停用
 export const deactivate = () => {
   //注销事件
-  unregister(APIEvents.TRACK_GET_PLAY_URL)
+  unregister(APIEvents.TRACK_GET_PLAY_URL, getExTrackPlayUrl)
   console.log('[ PLUGIN - Deactivated ] 音源 - Demo（空实现版）')
 }

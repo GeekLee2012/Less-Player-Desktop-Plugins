@@ -155,19 +155,11 @@ export const activate = async () => {
  
   access(APIPermissions.ADD_REQUEST_HANDLER, {
     id: Qingting.CODE,
-    includes: [{
-      pattern: 'qingting',
-      headers: {
+    hosts: ['qingting', 'qtfm.cn'],
+    defaultHeaders: {
         Origin: 'https://www.qingting.fm/',
         Referer: 'https://www.qingting.fm/',
-      }
-    }, {
-      pattern: 'qtfm.cn',
-      headers: {
-        Origin: 'https://www.qingting.fm/',
-        Referer: 'https://www.qingting.fm/',
-      }
-    }]
+    }
   })
 
   console.log('[ PLUGIN - Activated ] 电波平台 - 蜻蜓FM')

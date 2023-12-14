@@ -2,7 +2,7 @@
  * @name 音乐平台 - 咪咕
  * @version 1.0.0
  * @author WhoamI
- * @about Demo，目前音视频等内容均不可播放
+ * @about 不可播放的Demo，目前音视频等内容均不支持播放
  * @repository 
  */
 

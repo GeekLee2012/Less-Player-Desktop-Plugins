@@ -2,7 +2,7 @@
  * @name 频谱 - 能量方格
  * @version 1.0.0
  * @author WhoamI
- * @about Demo
+ * @about 
  * @repository 
  */
 
@@ -40,7 +40,7 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
 
         barHeight = freqData[i] / 255 * cHeight
         barHeight = barHeight > 0 ? barHeight : cellHeight
-        const cellSize = Math.floor(barHeight / (cellHeight + vspacing))
+        const cellSize = Math.floor((barHeight + vspacing) / (cellHeight + vspacing))
 
         canvasCtx.fillStyle = spectrumColor
         canvasCtx.strokeStyle = stroke

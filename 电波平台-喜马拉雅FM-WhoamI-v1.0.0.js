@@ -233,13 +233,11 @@ export const activate = async () => {
  
   access(APIPermissions.ADD_REQUEST_HANDLER, {
     id: Ximalaya.CODE,
-    includes: [{
-      pattern: 'ximalaya',
-      headers: {
+    hosts: ['ximalaya'],
+    defaultHeaders: {
         Origin: 'https://www.ximalaya.com',
         Referer: 'https://www.ximalaya.com/',
-      }
-    }]
+    }
   })
 
   console.log('[ PLUGIN - Activated ] 电波平台 - 喜马拉雅FM')

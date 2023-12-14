@@ -1135,15 +1135,11 @@ export const activate = async () => {
     includes: [{
       pattern: 'mac.kugou.com',
       headers: {
-        Origin: 'https://www.kugou.com/',
-        Referer: 'https://www.kugou.com/',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_16) AppleWebKit/605.1.15 (KHTML, like Gecko)'
       }
     }, {
       pattern: '&cmd=123&ext=mp4&hash=',
       headers: {
-        Origin: 'https://www.kugou.com/',
-        Referer: 'https://www.kugou.com/',
         'X-Router': 'trackermv.kugou.com',
       }
     }]
