@@ -7,7 +7,7 @@
  */
 
 /* 默认提供的插件API */
-const { common, utils, crypto, events, nets, permissions } = window.lessAPI
+const { common, utils, crypto, events, nets, permissions } = lessAPI
 const { Category, Playlist, Track, Album, Lyric } = common
 const { toTrimString, getImageUrlByQuality, } = utils
 const { md5, randomTextDefault, } = crypto
@@ -268,7 +268,7 @@ class RadioCN {
             }
 
             getJson(url, reqBody).then(jsonp => {
-                const json = parseJson(jsonp, callback)
+                const json = parseJsonp(jsonp, callback)
                 result.total = json.data.total_page
                 const list = json.data.odchannel
                 list.forEach(item => {
@@ -298,7 +298,7 @@ class RadioCN {
                 _: ts
             }
             getJson(url, reqBody).then(jsonp => {
-                const json = parseJson(jsonp, callback)
+                const json = parseJsonp(jsonp, callback)
                 const { odchannel: playlist, program: programs } = json.data
 
                 const { name, imageUrl, description } = playlist

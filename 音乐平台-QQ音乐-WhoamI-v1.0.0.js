@@ -7,7 +7,7 @@
  */
 
 /* 默认提供的插件API */
-const { common, utils, crypto, events, nets, permissions } = window.lessAPI
+const { common, utils, crypto, events, nets, permissions } = lessAPI
 const { Category, Playlist, Track, Album, Lyric } = common
 const { toTrimString, nextInt, getImageUrlByQuality,  } = utils
 const { base64Stringify, base64Parse, hexDecode } = crypto
@@ -899,7 +899,7 @@ class QQ {
     }
 
     //歌手详情：Name、Cover、简介(如果有)、热门歌曲等
-    static artistDetail(id) {
+    static artistDetail_v0(id) {
         return new Promise((resolve, reject) => {
             const result = { id, title: '未知歌手', cover: '', data: [], about: '' }
 
@@ -925,6 +925,51 @@ class QQ {
                     result.cover = getCoverByQuality({ artistMid: detail.basic_info.singer_mid }) || detail.pic.pic
                     result.about = detail.descstr
                 }
+                resolve(result)
+            })
+        })
+    }
+
+    //歌手详情：Name、Cover、简介(如果有)、热门歌曲等
+    static artistDetail(id) {
+        return new Promise((resolve, reject) => {
+            const result = { id, title: '未知歌手', cover: '', data: [], about: '' }
+
+            const url = 'https://u6.y.qq.com/cgi-bin/musicu.fcg'
+            const reqBody = JSON.stringify({
+                comm: {
+                    cv: 4747474,
+                    ct: 24,
+                    format: 'json',
+                    inCharset: 'utf-8',
+                    outCharset: 'utf-8',
+                    notice: 0,
+                    platform: 'yqq.json',
+                    needNewCode: 1,
+                    uin: 0,
+                    g_tk_new_20200303: 5381,
+                    g_tk: 5381
+                },
+                req_1: moduleReq('music.musichallSinger.SingerInfoInter', 'GetSingerDetail', {
+                    singer_mids: [id],
+                    ex_singer: 1,
+                    wiki_singer: 1,
+                    group_singer: 0,
+                    pic: 1,
+                    photos: 0
+                })
+            })
+
+            postJson(url, reqBody).then(json => {
+                const singer = json.req_1.data.singer_list[0]
+                const { basic_info, ex_info, wiki } = singer || {}
+                
+                Object.assign(result, { 
+                    title: basic_info && basic_info.name,
+                    about: ex_info && ex_info.desc,
+                    cover: getCoverByQuality({ artistMid: id })
+                })
+                
                 resolve(result)
             })
         })
@@ -997,7 +1042,7 @@ class QQ {
     }
 
     //专辑详情
-    static albumDetail(id) {
+    static albumDetail_v0(id) {
         return new Promise((resolve, reject) => {
             const url = "https://y.qq.com/n/ryqq/albumDetail/" + id
             getDoc(url).then(doc => {
@@ -1026,6 +1071,25 @@ class QQ {
                     result.company = detail.company
                     result.about = detail.desc
                 }
+                resolve(result)
+            })
+        })
+    }
+
+    //专辑详情
+    static albumDetail(id) {
+        return new Promise((resolve, reject) => {
+            const url = `https://c6.y.qq.com/v8/fcg-bin/musicmall.fcg?_=1709281071876&cv=4747474&ct=24&format=json&inCharset=utf-8&outCharset=utf-8&notice=0&platform=yqq.json&needNewCode=1&uin=0&g_tk_new_20200303=5381&g_tk=5381&cmd=get_album_buy_page&albummid=${id}&albumid=0`
+            getJson(url).then(json => {
+
+                const result = new Album(id, QQ.CODE)
+                const detail = json.data
+                result.title = detail.album_name
+                result.cover = getCoverByQuality({ albumMid: id })
+                result.artist = detail.singerinfo.map(ar => ({ id: ar.singermid, name: ar.singername, _id: ar.singerid }))
+                result.publishTime = detail.publictime
+                result.company = detail.companyname
+                result.about = detail.desc
                 resolve(result)
             })
         })

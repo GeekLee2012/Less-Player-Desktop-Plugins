@@ -7,7 +7,7 @@
  */
 
 /* 默认提供的插件API */
-const { utils, events } = window.lessAPI
+const { utils, events } = lessAPI
 const { nextInt } = utils
 const { APIEvents, register, unregister } = events
 
@@ -93,14 +93,15 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
     //canvasCtx.shadowColor = stroke
 
     //简约布局，设置不一样的大小
-    const arcRadius = 4
-    const wkw = isSimpleLayoutMode ? 16 : 13
+    const arcRadius = 4, wkSize = 52
+    let wkw = isSimpleLayoutMode ? 16 : 13
+    if(wkw * wkSize < cWidth) wkw = Math.ceil(cWidth / wkSize)
     const wkh = cHeight - 3
     const bkw = isSimpleLayoutMode ? (wkw * 9 / 13) : 9
     const bkh = wkh * 0.618
     ++count
     let wkeyFill = 0, bkeyFill = 0
-    for (var i = 0; i < 52; i++) {
+    for (var i = 0; i < wkSize; i++) {
         canvasCtx.fillStyle = '#ffffff'
         const wkey = new WhiteKey(i, i, i * wkw, 0, wkw, wkh, arcRadius)
         wkey.draw(canvasCtx)
@@ -115,7 +116,7 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
         let x = 0, j = (i - 3)
         if(i == 1) {
             x = i * wkw - bkw / 2
-        } else if(j % 7 == 1 || j % 7 == 2 || j % 7 == 4 || j % 7 == 5 || j % 7 == 6) {
+        } else if(j % 7 != 0 && j % 7 != 3) {
             x = (i - 1) * wkw - bkw / 2
         } else {
             continue

@@ -7,7 +7,7 @@
  */
 
 /* 默认提供的插件API */
-const { permissions } = window.lessAPI
+const { permissions } = lessAPI
 const { APIPermissions, access } = permissions
 
 

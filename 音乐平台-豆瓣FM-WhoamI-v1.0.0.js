@@ -7,7 +7,7 @@
  */
 
 /* 默认提供的插件API */
-const { common, utils, crypto, events, nets, permissions } = window.lessAPI
+const { common, utils, crypto, events, nets, permissions } = lessAPI
 const { Category, Playlist, Track, Album, Lyric } = common
 const { toTrimString, getImageUrlByQuality, nextInt, stringEquals, } = utils
 const { base64Parse, base64Stringify, hexDecode, randomTextDefault, } = crypto
@@ -181,22 +181,24 @@ class DouBan {
             const defaultCate = new Category('推荐')
             const tagPlaylistCate = new Category('主题歌单', DouBan.TAG_PLAYLIST_CODE)
             const othersCate = new Category('其他')
-            result.data.push(defaultCate)
-            result.data.push(tagPlaylistCate)
-            result.data.push(othersCate)
-
+            
             defaultCate.add('主题兆赫', DouBan.MHZ_CODE)
             defaultCate.add('精选歌单', DouBan.RECOMMAND_PLAYLIST_CODE)
 
+            othersCate.add('编辑精选', DouBan.RECOMMAND_BY_EDITOR_CODE)
+            othersCate.add('精选专辑', DouBan.RECOMMAND_ALBUM_CODE)
+            othersCate.add('推荐单曲', DouBan.RECOMMAND_SONGS_CODE)
+
             const tagPlaylistCatesJson = await DouBan.tagPlaylistCategories()
+            if(tagPlaylistCatesJson.data.length < 1) return resolve(result)
             tagPlaylistCatesJson.data.forEach(item => {
                 const { name, value } = item
                 tagPlaylistCate.add(name, value)
             })
 
-            othersCate.add('编辑精选', DouBan.RECOMMAND_BY_EDITOR_CODE)
-            othersCate.add('精选专辑', DouBan.RECOMMAND_ALBUM_CODE)
-            othersCate.add('推荐单曲', DouBan.RECOMMAND_SONGS_CODE)
+            result.data.push(defaultCate)
+            result.data.push(tagPlaylistCate)
+            result.data.push(othersCate)
             resolve(result)
         })
     }

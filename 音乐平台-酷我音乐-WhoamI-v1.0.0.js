@@ -7,7 +7,7 @@
  */
 
 /* 默认提供的插件API */
-const { common, utils, crypto, events, nets, permissions } = window.lessAPI
+const { common, utils, crypto, events, nets, permissions } = lessAPI
 const { Category, Playlist, Track, Album, Lyric } = common
 const { toLowerCaseTrimString, toUpperCaseTrimString, toMMssSSS, getImageUrlByQuality,  } = utils
 const { randomTextDefault, md5, sha1 } = crypto

@@ -7,7 +7,7 @@
  */
 
 /* 默认提供的插件API */
-const { common, utils, crypto, events, nets, permissions } = window.lessAPI
+const { common, utils, crypto, events, nets, permissions } = lessAPI
 const { Category, Playlist, Track, Album, Lyric } = common
 const { isBlank, toTrimString, toLowerCaseTrimString, toUpperCaseTrimString, getImageUrlByQuality, } = utils
 const { md5, randomTextDefault, } = crypto
@@ -1096,7 +1096,10 @@ class KuGou {
 
             getJson(url).then(json => {
                 const result = { id, platform: KuGou.CODE, url: '' }
-                result.url = json.data[id.toLowerCase()].downurl
+                if(json.data) {
+                    const urlData = json.data[toLowerCaseTrimString(id)]
+                    if(urlData) result.url = urlData.downurl
+                }
                 resolve(result)
             })
         })
