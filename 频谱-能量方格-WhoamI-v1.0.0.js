@@ -7,7 +7,7 @@
  */
 
 /* 默认提供的插件API */
-const { events } = window.lessAPI
+const { events } = lessAPI
 const { APIEvents, register, unregister } = events
 
 
