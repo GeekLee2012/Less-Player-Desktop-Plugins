@@ -7,7 +7,7 @@
  */
 
 /* 默认提供的插件API */
-const { common, utils, crypto, events, nets, } = window.lessAPI
+const { common, utils, crypto, events, nets, } = lessAPI
 const { toMmss, toMillis } = utils
 const { randomTextDefault, aesEncryptText, rsaEncryptDefault } = crypto
 const { APIEvents, register, unregister } = events
