@@ -87,7 +87,7 @@ class Qingting {
                     const playlist = new Playlist(id, Qingting.CODE, cover, title)
                     playlist.type = Playlist.FM_RADIO_TYPE
 
-                    const artist = [{ id: '', name: '蜻蜓FM电台' }]
+                    const artist = [{ id: '', name: '蜻蜓FM广播' }]
                     const album = { id: '', name: cateName }
                     const channelTrack = new Track(id, playlist.platform, title, artist, album, 0, cover)
                     channelTrack.streamType = 1 //普通音频Live

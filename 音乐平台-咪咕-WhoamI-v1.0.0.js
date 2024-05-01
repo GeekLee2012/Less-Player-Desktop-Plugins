@@ -22,9 +22,9 @@ let userAgent = null, cookieId = null
 const PUBLIC_KEY = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC8asrfSaoOb4je+DSmKdriQJKW\nVJ2oDZrs3wi5W67m3LwTB9QVR+cE3XWU21Nx+YBxS0yun8wDcjgQvYt625ZCcgin\n2ro/eOkNyUOTBIbuj9CvMnhUYiR61lC1f1IGbrSYYimqBVSjpifVufxtx/I3exRe\nZosTByYp4Xwpb1+WAQIDAQAB\n-----END PUBLIC KEY-----"
 
 const uuid = () => {
-  for (var t = [], e = 0; e < 36; e++) t[e] = '0123456789abcdef'.substr(Math.floor(16 * Math.random()), 1);
+  for (var t = [], e = 0; e < 36; e++) t[e] = '0123456789abcdef'.substring(Math.floor(16 * Math.random()), 1);
   t[14] = '4',
-  t[19] = '0123456789abcdef'.substr(3 & t[19] | 8, 1),
+  t[19] = '0123456789abcdef'.substring(3 & t[19] | 8, 1),
   t[8] = t[13] = t[18] = t[23] = '-';
   var n = t.join('');
   return n
@@ -36,7 +36,7 @@ const setupMiguCookieId = () => {
 }
 
 const getSearchUrl = (keyword, page, type) => {
-  const f ="html",s = Date.now() / 1000, c="001002A", v = "3.25.6";
+  const f ='html',s = Date.now() / 1000, c='001002A', v='3.25.6';
   const _i = ((e) => {
     var n = Object.keys(e).sort().map((function (t) {
       return ''.concat(t).concat(e[t])
@@ -72,7 +72,6 @@ const getPlayDetailSignedParams = (t) => {
 
 //自定义平台
 class Migu {
-
   static CODE = 'migu'
   static NEWEST_CODE = '1000000000'
 
