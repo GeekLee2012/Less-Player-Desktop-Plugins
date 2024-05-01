@@ -218,7 +218,7 @@ class QianQian {
             const { sign, timestamp } = createSign(params)
             const url = `https://music.91q.com/v1/artist/album?sign=${sign}&${pageInfo}&artistCode=${id}&appid=${appid}&timestamp=${timestamp}`
 
-            getJson(url, null, CONFIG).then(json => {
+            getJson(url).then(json => {
                 const { total, result: list } = json.data
                 const data = []
                 list.forEach(item => {
