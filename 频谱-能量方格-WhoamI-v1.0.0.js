@@ -27,8 +27,8 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
     if (!freqData || freqData.length < 1) return
     const dataLen = freqData.length
 
-    let barWidth = 6.5, barHeight, cellHeight = 3, x = 2,
-        hspacing = 2, vspacing = 1, step = 1
+    let barWidth = 10, barHeight, cellHeight = 3, x = 3,
+        hspacing = 4, vspacing = 2, step = 2
 
     let freqCnt = 0
     for (var i = 0; i < dataLen; i = i + step) {
@@ -39,8 +39,8 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
         if (++freqCnt >= 88) break
 
         barHeight = freqData[i] / 255 * cHeight
-        barHeight = barHeight > 0 ? barHeight : cellHeight
-        const cellSize = Math.floor((barHeight + vspacing) / (cellHeight + vspacing))
+        barHeight = Math.max(barHeight, cellHeight)
+        const cellSize = Math.max(1, Math.floor((barHeight + vspacing) / (cellHeight + vspacing)))
 
         canvasCtx.fillStyle = spectrumColor
         canvasCtx.strokeStyle = stroke
@@ -48,9 +48,10 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
         //canvasCtx.shadowColor = stroke
 
         for (var j = 0; j < cellSize; j++) {
-            const barHeight = j * (cellHeight + vspacing)
-            let y = cHeight - barHeight //alignment => bottom
-            if (alignment == 'top') y = barHeight
+            const _barHeight = (j + 1) * (cellHeight + vspacing)
+            //alignment => bottom
+            let y = cHeight - _barHeight
+            if (alignment == 'top') y = _barHeight
             else if (alignment == 'center') y = y / 2
 
             canvasCtx.fillRect(x, y, barWidth, cellHeight)

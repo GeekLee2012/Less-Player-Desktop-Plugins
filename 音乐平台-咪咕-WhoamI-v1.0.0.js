@@ -31,7 +31,7 @@ const uuid = () => {
 }
 
 const setupMiguCookieId = () => {
-  if(!cookieId) cookieId = (uuid() + '-n4' + (new Date).getTime())
+  if(!cookieId) cookieId = (uuid() + '-n4' + new Date().getTime())
   return cookieId
 }
 

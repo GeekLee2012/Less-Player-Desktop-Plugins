@@ -2,14 +2,14 @@
  * @name 音乐平台 - 千千音乐
  * @version 1.0.0
  * @author WhoamI
- * @about 
+ * @about 不支持直接独立播放，但配合其他平台可播放；<br>即当前平台仅提供歌单，其他平台提供音乐源。
  * @repository 
  */
 
 /* 默认提供的插件API */
 const { common, utils, crypto, events, nets, permissions } = lessAPI
 const { Category, Playlist, Track, Album, Lyric } = common
-const { toLowerCaseTrimString, toUpperCaseTrimString, toMMssSSS, getImageUrlByQuality, toTrimString } = utils
+const { toLowerCaseTrimString, toMMssSSS, getImageUrlByQuality, toTrimString, isBlank,  } = utils
 const { randomTextDefault, md5, sha1 } = crypto
 const { APIEvents, register, unregister } = events
 const { getDoc, getJson, getRaw } = nets
@@ -148,10 +148,12 @@ class QianQian {
         return new Promise((resolve, reject) => {
             const result = { id, platform: QianQian.CODE, lyric: null, trans: null }
             const { lyricUrl } = track
+            if(isBlank(lyricUrl)) return resolve(result)
+
             getRaw(lyricUrl).then(text => {
                 Object.assign(result, { lyric: Lyric.parseFromText(text) })
                 resolve(result)
-            })
+            }, error => resolve(result)).catch(error => resolve(result))
         })
     }
 
@@ -243,7 +245,6 @@ class QianQian {
             let { album, total, data } = detail
             totalPage = Math.ceil(total / limit)
             //TODO 暂时只返回50首歌曲，一张专辑50首歌也挺多啦
-            data.push(...detail.data)
             /*
             while (totalPage >= page) {
                 if (page > 3) break
@@ -253,7 +254,7 @@ class QianQian {
             }
             */
             const result = album
-            result.data = data
+            album.data = data
             resolve(result)
         })
     }
