@@ -36,7 +36,8 @@ class WhiteKey {
         ctx.stroke()
     }
 
-    fill(ctx) {
+    fill(ctx, fillStyle) {
+        ctx.fillStyle = fillStyle || '#ffffff'
         ctx.beginPath()
         ctx.moveTo(this.x, this.y)
         ctx.lineTo(this.x, this.y + this.height - this.arcRadius)
@@ -60,7 +61,8 @@ class BlackKey {
         this.height = height
     }
 
-    draw(ctx) {
+    draw(ctx, fillStyle) {
+        ctx.fillStyle = fillStyle || '#000000'
         ctx.fillRect(this.x, this.y, this.width, this.height)
     }
 }
@@ -86,9 +88,10 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
     canvasCtx.fillStyle = 'transparent'
     canvasCtx.fillRect(0, 0, cWidth, cHeight)
 
+    const strokeStyle = '#333333'
     canvasCtx.lineWidth = 0.5
     canvasCtx.fillStyle = '#ffffff'
-    canvasCtx.strokeStyle = '#333333'
+    canvasCtx.strokeStyle = strokeStyle
     //canvasCtx.shadowBlur = 3
     //canvasCtx.shadowColor = stroke
 
@@ -100,17 +103,19 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
     const bkw = isSimpleLayoutMode ? (wkw * 9 / 13) : 9
     const bkh = wkh * 0.618
     ++count
+    //可能会溢出
+    count = Math.max(1, count)
+
     let wkeyFill = 0, bkeyFill = 0
     for (var i = 0; i < wkSize; i++) {
-        canvasCtx.fillStyle = '#ffffff'
         const wkey = new WhiteKey(i, i, i * wkw, 0, wkw, wkh, arcRadius)
-        wkey.draw(canvasCtx)
-        wkey.fill(canvasCtx)
+        let wkeyFillStyle = null
         if(hitRandom(count) && wkeyFill < 4) {
-            canvasCtx.fillStyle = spectrumColor
-            wkey.fill(canvasCtx)
+            wkeyFillStyle = spectrumColor || stroke
             ++wkeyFill
         }
+        wkey.draw(canvasCtx)
+        wkey.fill(canvasCtx, wkeyFillStyle)
 
         if(i < 1) continue
         let x = 0, j = (i - 3)
@@ -121,18 +126,19 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
         } else {
             continue
         }
-        canvasCtx.fillStyle = '#000000'
+        
+        let bkeyFillStyle = null
         const bkey = new BlackKey(i, i, x, 0, bkw, bkh)
         if(hitRandom(count) && bkeyFill < 2) {
-            canvasCtx.fillStyle = stroke
+            bkeyFillStyle = spectrumColor || stroke
             ++bkeyFill
         }
-        bkey.draw(canvasCtx)
+        bkey.draw(canvasCtx, bkeyFillStyle)
 
         if(i * wkw >= cWidth) break
     }
 
-    canvasCtx.strokeStyle = '#333333'
+    canvasCtx.strokeStyle = strokeStyle
     canvasCtx.beginPath()
     canvasCtx.moveTo(0, wkh - arcRadius + 1)
     canvasCtx.lineTo(0, 0)

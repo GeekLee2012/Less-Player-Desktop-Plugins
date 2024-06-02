@@ -179,7 +179,7 @@ class DouBan {
             const result = { platform: DouBan.CODE, data: [], orders: [] }
 
             const defaultCate = new Category('推荐')
-            const tagPlaylistCate = new Category('主题歌单', DouBan.TAG_PLAYLIST_CODE)
+            const tagPlaylistCate = new Category('风格', DouBan.TAG_PLAYLIST_CODE)
             const othersCate = new Category('其他')
             
             defaultCate.add('主题兆赫', DouBan.MHZ_CODE)

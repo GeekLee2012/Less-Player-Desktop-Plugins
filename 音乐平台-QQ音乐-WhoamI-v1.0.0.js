@@ -493,10 +493,11 @@ class QQ {
                 const recommandTagNames = [
                     '国语', '英语', '粤语',
                     '轻音乐', '校园', '民谣',
-                    '轻音乐', '思念', '学习工作',
-                    '治愈', '古典', '摇滚',
-                    '爵士', '运动', '乡村',
-                    '乐器', '婚礼']
+                    '思念', '学习工作', '治愈', 
+                    '古典', '摇滚', '爵士', 
+                    '运动', '乡村', '乐器', 
+                    '婚礼', '00年代',  '90年代']
+                const ignoreTagNames = ['AI歌单']
                 const recommandCategory = new Category('推荐', 0)
                 result.data.push(recommandCategory)
 
@@ -508,7 +509,7 @@ class QQ {
                     const items = cate.v_item
                     items.forEach(item => {
                         const { id, name } = item
-                        if (name == 'AI歌单') return
+                        if (ignoreTagNames.includes(name)) return
                         if (recommandTagNames.includes(name)) recommandCategory.add(name, id)
                         category.add(name, id)
                     })
@@ -566,15 +567,34 @@ class QQ {
                 result.cover = playlist.frontPicUrl || playlist.headPicUrl
                 result.about = playlist.intro
 
-                const songs = json.req_1.data.songInfoList
+                let songs = json.req_1.data.songInfoList || []
+                if(songs.length < 1) songs = json.req_1.data.data.song || []
                 songs.forEach(song => {
-                    const artist = song.singer.map(ar => ({ id: ar.mid, name: ar.name, _id: ar.id }))
-                    const album = { id: song.album.mid, name: song.album.name }
-                    const duration = song.interval * 1000
-                    const cover = getCoverByQuality({ albumMid: song.album.mid })
-                    const track = new Track(song.mid, QQ.CODE, song.name, artist, album, duration, cover)
+                    let artist = []
+                    if(song.singer) {
+                        artist = song.singer.map(ar => ({ id: ar.mid, name: ar.name, _id: ar.id }))
+                    } else if(song.singerMid) {
+                        artist.push({
+                            id: song.singerMid,
+                            name: song.singerName,
+                            _id: song.singerId
+                        })
+                    }
+
+                    let album = { id: null, name: '' }
+                    if(song.album) {
+                        album = { id: song.album.mid, name: song.album.name }
+                    } else if(song.albumMid) {
+                        Object.assign(album, { id: song.albumMid, name: song.albumName})
+                    }
+                    
+                    const duration = (song.interval || 0) * 1000
+                    const cover = getCoverByQuality({ albumMid: album.id }) || song.cover
+                    const tId = song.mid || song.songMid
+                    const tTitle = song.name || song.title
+                    const track = new Track(tId, QQ.CODE, tTitle, artist, album, duration, cover)
                     track.pid = id
-                    track.songID = song.id
+                    track.songID = song.id || song.songId
                     result.addTrack(track)
                 })
                 resolve(result)
