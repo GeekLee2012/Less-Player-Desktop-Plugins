@@ -420,6 +420,14 @@ const lyricExtReqBody = (id, track) => {
     }
 }
 
+const shuffle = (arr) => {
+    let i = arr.length
+    while (i) {
+        let j = Math.floor(Math.random() * i--);
+        [arr[j], arr[i]] = [arr[i], arr[j]]
+    }
+}
+
 //旧版API，参考： https://github.com/jsososo/QQMusicApi/
 class QQ {
     static CODE = "qq"
@@ -496,7 +504,9 @@ class QQ {
                     '思念', '学习工作', '治愈', 
                     '古典', '摇滚', '爵士', 
                     '运动', '乡村', '乐器', 
-                    '婚礼', '00年代',  '90年代']
+                    '婚礼', '安静', '快乐',
+                    '00年代',  '90年代', 
+                    '法语', '睡前']
                 const ignoreTagNames = ['AI歌单']
                 const recommandCategory = new Category('推荐', 0)
                 result.data.push(recommandCategory)
@@ -515,6 +525,9 @@ class QQ {
                     })
                     result.data.push(category)
                 })
+                //随机打乱推荐分类
+                //shuffle(recommandCategory.data)
+                
                 const firstCate = result.data[0]
                 firstCate.data.splice(0, 0, { key: '默认', value: QQ.DEFAULT_CATE })
                 firstCate.data.splice(1, 0, { key: '排行榜', value: QQ.TOPLIST_CODE })

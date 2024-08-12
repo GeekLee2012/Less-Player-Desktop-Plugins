@@ -315,7 +315,7 @@ class DouBan {
         return DouBan.mhzChannels(cate, offset, limit, page)
     }
 
-    //兆赫列表，playlistRadios
+    //主题兆赫，playlistRadios
     static mhzChannels(cate, offset, limit, page) {
         return new Promise(async (resolve, reject) => {
             const result = { platform: DouBan.CODE, cate, offset, limit, page, total: 1, data: [] }
@@ -367,7 +367,8 @@ class DouBan {
                         if (!radios) return
                         radios.forEach(radio => {
                             const { id, title1, title2, color } = radio
-                            const title = `${stitle} ｜ ${title1} ${title2}`
+                            const rtitle = (title1 == title2) ? title1 : `${title1} ${title2}`
+                            const title = `${stitle} ｜ ${rtitle}`
                             const playlist = new Playlist(DouBan.MHZ_CODE + '_' + id, DouBan.CODE, null, title)
                             playlist.type = Playlist.NORMAL_RADIO_TYPE
                             const { R, G, B } = color
