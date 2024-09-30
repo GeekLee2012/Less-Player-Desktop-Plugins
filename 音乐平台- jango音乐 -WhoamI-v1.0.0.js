@@ -19,6 +19,26 @@ const { APIPermissions, access } = permissions
 //04f74cc5d6b9ac11e553225fa99ad085
 let sid = null
 
+const getCoverByQuality = (url) => {
+    if (!url) return url
+    
+    const isCustom = url.includes('_')
+    return isCustom ? getImageUrlByQuality([
+        url.replace('_xl', '_lg'), //200
+        url.replace('_lg', '_xl'), //340
+        url.replace('_lg', '_xl'), 
+        url.replace('_lg', '_xl'),
+        url.replace('_lg', '').replace('_xl', '')
+    ]) : getImageUrlByQuality([
+        url.replace('.jpg', '_lg.jpg').replace('.png', '_lg.png'), 
+        url.replace('.jpg', '_xl.jpg').replace('.png', '_xl.png'), 
+        url.replace('.jpg', '_xl.jpg').replace('.png', '_xl.png'), 
+        url.replace('.jpg', '_xl.jpg').replace('.png', '_xl.png'), 
+        url,
+    ])
+}
+
+
 class Jango {
     static CODE = "jango"
     static DEFAULT_CATE = 'Recommended'
@@ -71,7 +91,7 @@ class Jango {
                     title: song || (playlist && playlist.title),
                     type: Playlist.NORMAL_RADIO_TYPE, 
                     channel, 
-                    cover: album_art || (playlist && playlist.cover), 
+                    cover: getCoverByQuality(album_art || (playlist && playlist.cover)), 
                     album: { id: '', name: album, _id: channel },
                     playlist
                 })
@@ -100,7 +120,7 @@ class Jango {
                     if(recommended && recommended.length > 0) {
                         recommended.forEach(item => {
                             const imgsLen = item.imgs.length
-                            const cover = item.imgs[nextInt(imgsLen)].url || item.imgs[0].url
+                            const cover = getCoverByQuality(item.imgs[nextInt(imgsLen)].url || item.imgs[0].url)
                             const playlist = new Playlist(item.id, Jango.CODE, cover, item.name)
                             playlist.type = Playlist.NORMAL_RADIO_TYPE 
                             result.data.push(playlist)
@@ -110,7 +130,7 @@ class Jango {
                         trending.forEach(item => {
                             const imgsLen = item.imgs.length
                             const cover = item.imgs[nextInt(imgsLen)].url || item.imgs[0].url
-                            const playlist = new Playlist(item.id, Jango.CODE, cover, item.name)
+                            const playlist = new Playlist(item.id, Jango.CODE, getCoverByQuality(cover), item.name)
                             playlist.type = Playlist.NORMAL_RADIO_TYPE
                             result.data.push(playlist)
                         })
@@ -144,7 +164,7 @@ class Jango {
                     list.forEach(item => { 
                         const imgsLen = item.imgs.length
                         const cover = item.imgs[nextInt(imgsLen)].url || item.imgs[0].url
-                        const playlist = new Playlist(item.id, Jango.CODE, cover, item.name)
+                        const playlist = new Playlist(item.id, Jango.CODE, getCoverByQuality(cover), item.name)
                         playlist.type = Playlist.NORMAL_RADIO_TYPE
                         result.data.push(playlist)
                     })

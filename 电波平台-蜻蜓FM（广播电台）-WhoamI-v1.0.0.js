@@ -18,6 +18,27 @@ const { APIPermissions, access } = permissions
 
 const getSign = (src) => (hmacMd5(src, 'Lwrpu$K5oP'))
 
+
+const getCoverByQuality = (url) => {
+    if(!url) return ''
+
+    const index = url.indexOf('!')
+    return index > 0 ? getImageUrlByQuality([
+        url.substring(0, index) + '!200',
+        url.substring(0, index) + '!200',
+        url.substring(0, index) + '!400',
+        url.substring(0, index),
+        url.substring(0, index)
+    ]) : getImageUrlByQuality([
+        url + '!200',
+        url + '!200',
+        url + '!400',
+        url,    // > 400: 500、800
+        url
+    ])
+}
+
+
 class Qingting {
     static CODE = 'qingtingfm'
     static RADIO_PREFIX = 'FM_'
@@ -84,7 +105,7 @@ class Qingting {
                     const coverEl = item.querySelector('.coverImg img')
                     const cover = transformUrl(coverEl.getAttribute('src'))
                     
-                    const playlist = new Playlist(id, Qingting.CODE, cover, title)
+                    const playlist = new Playlist(id, Qingting.CODE, getCoverByQuality(cover), title)
                     playlist.type = Playlist.FM_RADIO_TYPE
 
                     const artist = [{ id: '', name: '蜻蜓FM广播' }]
@@ -122,6 +143,7 @@ class Qingting {
             const _sign = encodeURIComponent(sign)
 
             result.url = `https://lhttp.qtfm.cn${path}?app_id=${appid}&ts=${ts}&sign=${_sign}`
+            result.cover = getCoverByQuality(track.cover)
             resolve(result)
         })
     }

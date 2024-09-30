@@ -28,35 +28,17 @@ const getSignature = (param) => {
     return toUpperCaseTrimString(md5(signParam(param)))
 }
 
-/*
-const getCustomCover0 = (url, size) => {
-    if (!url) return url
-    //http://c1.kgimg.com/custom/150/20201207/20201207134716994336.jpg
-    //https://imge.kugou.com/temppic/20130807/20130807185439172736.png
-    //https://imge.kugou.com/stdmusic/20180712/20180712154305100613.jpg
-    const keys = ['/custom/150/', '/temppic/', '/{size}', '/stdmusic/']
-    size = size || 480
-    if (url.includes(keys[0])) {
-        return 'https://imgessl.kugou.com/custom/' + size + '/' + url.split(keys[0])[1]
-    } else if (url.includes(keys[1])) {
-        return 'https://imgessl.kugou.com/custom/' + size + '/' + url.split(keys[1])[1]
-    } else if (url.includes(keys[2])) {
-        return url.replace(keys[2], `/${size}`)
-    } else if (url.includes(keys[3])) {
-        return 'https://imge.kugou.com/stdmusic/' + size + '/' + url.split(keys[3])[1]
-    }
-    return url
-}
-*/
 
-const getCustomCover = (url, size) => {
+const resizeCoverInUrl = (url, size) => {
     if (!url) return url
     //http://c1.kgimg.com/custom/150/20201207/20201207134716994336.jpg
     //https://imge.kugou.com/temppic/20130807/20130807185439172736.png
     //https://imge.kugou.com/stdmusic/20180712/20180712154305100613.jpg
     //https://imge.kugou.com/stdmusic/240/20180712/20180712154305100613.jpg
     //http://imge.kugou.com/soft/collection/240/20210518/20210518180852210693.jpg
-    size = size || 480
+    //https://imgessl.kugou.com/fmlogov2/240/20220121124411107744.jpg
+    size = size || 240
+    
     if (url.includes('/temppic/')) {
         url = `https://imgessl.kugou.com/custom/${size}/` + url.split('/temppic/')[1]
     } else if (url.includes('/stdmusic/')) {
@@ -74,23 +56,45 @@ const getCustomCover = (url, size) => {
         .replace('/softhead/150/', `/softhead/${size}/`)
         .replace('/softhead/240/', `/softhead/${size}/`)
         .replace('/softhead/480/', `/softhead/${size}/`)
+        .replace('/stdmusic/150/', `/stdmusic/${size}/`)
+        .replace('/stdmusic/240/', `/stdmusic/${size}/`)
+        .replace('/stdmusic/480/', `/stdmusic/${size}/`)
+        .replace('/fmlogov2/150/', `/fmlogov2/${size}/`)
+        .replace('/fmlogov2/240/', `/fmlogov2/${size}/`)
+        .replace('/fmlogov2/480/', `/fmlogov2/${size}/`)
         .replace('/{size}/', `/${size}/`)
 }
 
 const getCoverByQuality = (url) => {
     if (!url) return url
+     
     return getImageUrlByQuality([
-        getCustomCover(url, 150),
-        getCustomCover(url, 240),
-        getCustomCover(url)
+        resizeCoverInUrl(url, 150),
+        resizeCoverInUrl(url, 240),
+        resizeCoverInUrl(url, 480),
+        resizeCoverInUrl(url, 480),
+        resizeCoverInUrl(url, 480)
     ])
 }
 
 const getCoverUrlByName = (cate, size, name) => {
-    if (!name) return null
+    if (!name) return ''
     const date = name.substring(0, 8)
     return `https://imgessl.kugou.com/${cate}/${size}/${date}/${name}`
 }
+
+const getCoverUrlByQualityAndName = (cate, name) => {
+    if (!name) return ''
+
+    return getImageUrlByQuality([
+        getCoverUrlByName(cate, 150, name),
+        getCoverUrlByName(cate, 240, name),
+        getCoverUrlByName(cate, 480, name),
+        getCoverUrlByName(cate, 480, name),
+        getCoverUrlByName(cate, 480, name)
+    ])
+}
+
 
 const jsonify = (text) => {
     //text = text ? text.trim() : ''
@@ -133,7 +137,8 @@ class KuGou {
                     || doc.querySelectorAll('.pc_special_menu')
                 menulist.forEach(menu => {
                     let cateName = menu.querySelector('h3').textContent
-                    if (cateName == '默认') cateName = '推荐'
+                    cateName = cateName == '默认' ? '推荐' : cateName
+
                     const category = new Category(cateName)
                     const list = menu.querySelectorAll('.pc_specail_menu_content a')
                         || menu.querySelectorAll('.pc_special_menu_content a')
@@ -145,8 +150,11 @@ class KuGou {
                     })
                     result.data.push(category)
                 })
-                result.data[0].add("榜单", KuGou.TOPLIST_CODE)
-                    .add("电台", KuGou.RADIO_CODE)
+                
+                if(result.data.length > 0) {
+                    result.data[0].add("榜单", KuGou.TOPLIST_CODE)
+                        .add("电台", KuGou.RADIO_CODE)
+                }
 
                 result.orders.push(...KuGou.ORDERS)
                 resolve(result)
@@ -256,7 +264,7 @@ class KuGou {
                     const fmid = url.split('#fm_id=')[1].split('&')[0]
                     const cover = item.querySelector('.cover img').getAttribute('src')
                     const title = item.querySelector('.name').textContent
-                    const playlist = new Playlist(fmid, KuGou.CODE, cover, title, url)
+                    const playlist = new Playlist(fmid, KuGou.CODE, getCoverByQuality(cover), title, url)
                     playlist.type = Playlist.NORMAL_RADIO_TYPE
                     result.data.push(playlist)
                 })
@@ -470,7 +478,7 @@ class KuGou {
                                 artist.push({ id: '', name: authors[i] })
                             }
                         }
-                        const track = new Track(item.audio_id, KuGou.CODE, songname, artist, album, duration, trackCover)
+                        const track = new Track(item.audio_id, KuGou.CODE, songname, artist, album, duration, getCoverByQuality(trackCover))
                         track.hash = item.high_mv_hash || item.hash
                         track.mv = item.mv_hash
                         track.pid = id
@@ -769,7 +777,7 @@ class KuGou {
                 const list = json.data
                 list.forEach(item => {
                     const artist = [{ id, name: item.singername }]
-                    const album = new Album(item.albumid, KuGou.CODE, item.albumname, item.img, artist)
+                    const album = new Album(item.albumid, KuGou.CODE, item.albumname, getCoverByQuality(item.img), artist)
                     data.push(album)
                 })
                 const result = { offset, limit, page, total, data }
@@ -821,13 +829,14 @@ class KuGou {
                         let trackCover = null
                         const authors = item.authors
                         if (authors && authors.length > 0) {
-                            trackCover = authors[0].sizable_avatar.replace('{size}', '400')
+                            //trackCover = authors[0].sizable_avatar.replace('{size}', '400')
+                            trackCover = authors[0].sizable_avatar.replace('{size}', '240')
                             const arData = authors.map(ar => ({
                                 id: ar.author_id, name: ar.author_name
                             }))
                             artist.push(...arData)
                         }
-                        const track = new Track(item.audio_id, KuGou.CODE, item.songname, artist, album, duration, trackCover)
+                        const track = new Track(item.audio_id, KuGou.CODE, item.songname, artist, album, duration, getCoverByQuality(trackCover))
                         track.hash = item.hash
                         data.push(track)
                     })
@@ -981,7 +990,7 @@ class KuGou {
                     vid: item.MvHash,
                     platform: KuGou.CODE,
                     title: item.MvName,
-                    cover: getCoverUrlByName('mvhdpic', 240, item.Pic),
+                    cover: getCoverUrlByQualityAndName('mvhdpic', item.Pic),
                     type: Playlist.VIDEO_TYPE,
                     subtitle: item.SingerName,
                     duration: (item.Duration * 1000),

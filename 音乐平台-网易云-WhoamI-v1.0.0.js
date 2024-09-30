@@ -90,15 +90,19 @@ const searchParam_v1 = (keyword, type, limit) => {
 
 const getCoverByQuality = (url) => {
     if (!url) return url
+
+    const index = url.indexOf('?')
+    if(index > -1) url = url.substring(0, index)
+    
     return getImageUrlByQuality([
-        `${url}?param=140y140`,
+        //`${url}?param=140y140`,
+        `${url}?param=180y180`,
+        `${url}?param=300y300`,
         `${url}?param=500y500`,
+        `${url}?param=800y800`,
         `${url}?param=1000y1000`,
     ])
 }
-
-const DEFAULT_CATE = new Category('推荐')
-DEFAULT_CATE.add('默认', '')
 
 
 class NetEase {
@@ -106,13 +110,20 @@ class NetEase {
     static TOPLIST_CODE = '排行榜'
     static RADIO_PREFIX = 'DJR_'
 
+    static defaultCategory() {
+        const cate = new Category('推荐')
+        cate.add('默认', '')    
+        cate.add('排行榜', NetEase.TOPLIST_CODE)
+        return cate
+    }
+
     //全部分类
     static categories() {
         return new Promise((resolve) => {
             const url = 'https://music.163.com/discover/playlist'
             getDoc(url).then(doc => {
                 const result = { platform: NetEase.CODE, data: [], orders: [] }
-                result.data.push(DEFAULT_CATE)
+                result.data.push(NetEase.defaultCategory())
 
                 const listEl = doc.querySelectorAll("#cateListBox .f-cb")
                 listEl.forEach(el => {
@@ -125,8 +136,6 @@ class NetEase {
                     })
                     result.data.push(category)
                 })
-                const firstCate = result.data[0]
-                firstCate.data.splice(1, 0, { key: '排行榜', value: NetEase.TOPLIST_CODE })
                 resolve(result)
             })
         })
@@ -150,7 +159,7 @@ class NetEase {
                     if (coverEl) {
                         cover = coverEl.getAttribute("src")
                         //cover = coverEl.getAttribute("src").replace("140y140", "500y500")
-                        if (cover) cover = getCoverByQuality(cover.split("?")[0])
+                        if (cover) cover = cover.split("?")[0]
                     }
 
                     if (titleEl) {
@@ -164,7 +173,7 @@ class NetEase {
                     }
 
                     if (id && itemUrl) {
-                        const playlist = new Playlist(id, NetEase.CODE, cover, title, `${BASE_URL}${itemUrl}`)
+                        const playlist = new Playlist(id, NetEase.CODE, getCoverByQuality(cover), title, `${BASE_URL}${itemUrl}`)
                         playlist.playCount = playCount
                         result.data.push(playlist)
                     }
@@ -199,7 +208,7 @@ class NetEase {
                     if (coverEl) {
                         //cover = coverEl.getAttribute("src").replace("40y40", "500y500")
                         cover = coverEl.getAttribute("src")
-                        if (cover) cover = getCoverByQuality(cover.split("?")[0])
+                        if (cover) cover = cover.split("?")[0]
                     }
 
                     if (titleEl) {
@@ -209,7 +218,7 @@ class NetEase {
                     }
 
                     if (id && itemUrl) {
-                        const detail = new Playlist(id, NetEase.CODE, cover, title, itemUrl)
+                        const detail = new Playlist(id, NetEase.CODE, getCoverByQuality(cover), title, itemUrl)
                         result.data.push(detail)
                     }
                 });
@@ -260,7 +269,7 @@ class NetEase {
                         const artist = []
                         song.ar.forEach(e => artist.push({ id: e.id, name: e.name }))
                         const album = { id: song.al.id, name: song.al.name }
-                        const track = new Track(song.id, NetEase.CODE, song.name, artist, album, song.dt, song.al.picUrl)
+                        const track = new Track(song.id, NetEase.CODE, song.name, artist, album, song.dt, getCoverByQuality(song.al.picUrl))
                         track.mv = song.mv
                         track.pid = id
                         track.payPlay = (song.fee != 8 && song.fee != 0)
@@ -289,6 +298,7 @@ class NetEase {
                     const result = new Track(id)
                     const song = json.data[0]
                     result.url = song.url
+                    result.cover = getCoverByQuality(track.cover)
                     resolve(result)
                 })
             })
@@ -326,7 +336,7 @@ class NetEase {
                 const title = doc.querySelector("#artist-name").textContent
                 let cover = doc.querySelector(".n-artist img").getAttribute('src')
                 //cover = cover.replace('640y300', '500y500')
-                if (cover) cover = getCoverByQuality(cover.split('?')[0])
+                if (cover) cover = cover.split('?')[0]
 
                 const data = []
                 const jsonText = doc.querySelector('#song-list-pre-data').textContent
@@ -340,7 +350,7 @@ class NetEase {
 
                     const itemAlbum = item.album
                     const album = { id: itemAlbum.id, name: itemAlbum.name }
-                    const albumCover = itemAlbum.picUrl
+                    const albumCover = getCoverByQuality(itemAlbum.picUrl)
 
                     const track = new Track(item.id, NetEase.CODE, item.name,
                         artist, album, item.duration, albumCover)
@@ -348,7 +358,7 @@ class NetEase {
                     data.push(track)
                 })
 
-                const result = { id, platform: NetEase.CODE, title, cover, hotSongs: data }
+                const result = { id, platform: NetEase.CODE, title, cover: getCoverByQuality(cover), hotSongs: data }
                 resolve(result)
             })
         })
@@ -378,12 +388,12 @@ class NetEase {
                     const title = coverEl.getAttribute('title')
                     let cover = coverEl.querySelector('img').getAttribute('src')
                     //cover = cover.replace('120y120', '500y500')
-                    if (cover) cover = getCoverByQuality(cover.split('?')[0])
+                    if (cover) cover = cover.split('?')[0]
 
                     const id = coverEl.querySelector('.msk').getAttribute('href').split('=')[1]
                     const publishTime = el.querySelector(".s-fc3").textContent
 
-                    const album = new Album(id, NetEase.CODE, title, cover)
+                    const album = new Album(id, NetEase.CODE, title, getCoverByQuality(cover))
                     album.publishTime = publishTime
                     data.push(album)
                 })
@@ -434,8 +444,8 @@ class NetEase {
                     about = pEl.innerHTML
                 }
 
-                if (cover) cover = getCoverByQuality(cover.split('?')[0])
-                const result = new Album(id, NetEase.CODE, title, cover, artist, company, publishTime, about)
+                if (cover) cover = cover.split('?')[0]
+                const result = new Album(id, NetEase.CODE, title, getCoverByQuality(cover), artist, company, publishTime, about)
 
                 const predata = doc.querySelector('#song-list-pre-data')
                 if (predata) {
@@ -445,7 +455,7 @@ class NetEase {
                         item.artists.forEach(ar => trackArtist.push({ id: ar.id, name: ar.name }))
                         const album = { id, name: title }
                         const trackCover = item.album.picUrl
-                        const track = new Track(item.id, NetEase.CODE, item.name, trackArtist, album, item.duration, trackCover)
+                        const track = new Track(item.id, NetEase.CODE, item.name, trackArtist, album, item.duration, getCoverByQuality(trackCover))
                         track.mv = item.mvid
                         result.addTrack(track)
                     })
@@ -475,7 +485,7 @@ class NetEase {
                 const data = list.map(item => {
                     const artist = item.ar.map(e => ({ id: e.id, name: e.name }))
                     const album = { id: item.al.id, name: item.al.name }
-                    const track = new Track(item.id, NetEase.CODE, item.name, artist, album, item.dt, item.al.picUrl)
+                    const track = new Track(item.id, NetEase.CODE, item.name, artist, album, item.dt, getCoverByQuality(item.al.picUrl))
                     track.mv = item.mv
                     return track
                 })
@@ -502,7 +512,7 @@ class NetEase {
             postJson(url, reqBody).then(json => {
                 const list = json.result.playlists
                 const data = list.map(item => {
-                    const playlist = new Playlist(item.id, NetEase.CODE, item.coverImgUrl, item.name)
+                    const playlist = new Playlist(item.id, NetEase.CODE, getCoverByQuality(item.coverImgUrl), item.name)
                     return playlist
                 })
                 if (data && data.length > 0) result.data.push(...data)
@@ -529,7 +539,7 @@ class NetEase {
                 const list = json.result.albums
                 const data = list.map(item => {
                     const artist = item.artists.map(e => ({ id: e.id, name: e.name }))
-                    const album = new Album(item.id, NetEase.CODE, item.name, item.picUrl, artist, item.company)
+                    const album = new Album(item.id, NetEase.CODE, item.name, getCoverByQuality(item.picUrl), artist, item.company)
                     album.publishTime = toYmd(item.publishTime)
                     return album
                 })
@@ -560,7 +570,6 @@ class NetEase {
                         id: item.id,
                         platform: NetEase.CODE,
                         title: item.name,
-                        //cover: (item.picUrl + "?param=500y500")
                         cover: getCoverByQuality(item.picUrl)
                     }))
                 }
@@ -591,7 +600,7 @@ class NetEase {
                         vid: item.vid,
                         platform: NetEase.CODE,
                         title: item.title,
-                        cover: item.coverUrl,
+                        cover: getCoverByQuality(item.coverUrl),
                         type: Playlist.VIDEO_TYPE,
                         subtitle: NetEase.getVideoSutitle(item.creator),
                         duration: item.durationms,
@@ -689,12 +698,12 @@ class NetEase {
                     if (coverEl) {
                         cover = coverEl.querySelector('img').getAttribute('src')
                         //.replace("130y130", "500y500")
-                        if (cover) cover = getCoverByQuality(cover.split('?')[0])
+                        if (cover) cover = cover.split('?')[0]
                     }
                     const aEl = el.querySelector('.nm')
                     const id = aEl.getAttribute('href').split('?id=')[1]
                     const title = aEl.textContent
-                    const artist = { id, platform: NetEase.CODE, title, cover }
+                    const artist = { id, platform: NetEase.CODE, title, cover: getCoverByQuality(cover) }
                     result.data.push(artist)
                 })
                 resolve(result)
@@ -720,7 +729,7 @@ class NetEase {
                     const id = item.id
                     const title = item.name
                     const cover = item.picUrl
-                    const artist = { id, platform: NetEase.CODE, title, cover }
+                    const artist = { id, platform: NetEase.CODE, title, cover: getCoverByQuality(cover) }
                     result.push(artist)
                     resolve(result)
                 })
@@ -745,12 +754,12 @@ class NetEase {
                     if (coverEl) {
                         cover = coverEl.querySelector('img').getAttribute('src')
                         //.replace("130y130", "500y500")
-                        if (cover) cover = getCoverByQuality(cover.split('?')[0])
+                        if (cover) cover = cover.split('?')[0]
                     }
                     const aEl = el.querySelector('.nm')
                     const id = aEl.getAttribute('href').split('?id=')[1]
                     const title = aEl.textContent
-                    const artist = { id, platform: NetEase.CODE, title, cover }
+                    const artist = { id, platform: NetEase.CODE, title, cover: getCoverByQuality(cover), }
                     result.data.push(artist)
                 })
                 return result
@@ -785,7 +794,7 @@ class NetEase {
                     const id = item.id
                     const title = item.name
                     const cover = item.picUrl
-                    const artist = { id, platform: NetEase.CODE, title, cover }
+                    const artist = { id, platform: NetEase.CODE, title, cover: getCoverByQuality(cover) }
                     result.data.push(artist)
                 })
                 resolve(result)
@@ -848,7 +857,7 @@ class NetEase {
                         if (coverEl) {
                             cover = coverEl.getAttribute("src")
                             //.replace("200y200", "500y500")
-                            if (cover) cover = getCoverByQuality(cover.split('?')[0])
+                            if (cover) cover = cover.split('?')[0]
                         }
 
                         if (titleEl) {
@@ -858,7 +867,7 @@ class NetEase {
                         }
 
                         if (id && itemUrl) {
-                            const detail = new Playlist(id, NetEase.CODE, cover, title, `${BASE_URL}${itemUrl}`)
+                            const detail = new Playlist(id, NetEase.CODE, getCoverByQuality(cover), title, `${BASE_URL}${itemUrl}`)
                             result.data.push(detail)
                         }
                     })
@@ -880,7 +889,7 @@ class NetEase {
                     if (coverEl) {
                         cover = coverEl.getAttribute("src")
                         //.replace("200y200", "500y500")
-                        if (cover) cover = getCoverByQuality(cover.split('?')[0])
+                        if (cover) cover = cover.split('?')[0]
                     }
 
                     if (titleEl) {
@@ -890,7 +899,7 @@ class NetEase {
                     }
 
                     if (id && itemUrl) {
-                        const detail = new Playlist(id, NetEase.CODE, cover, title, `${BASE_URL}${itemUrl}`)
+                        const detail = new Playlist(id, NetEase.CODE, getCoverByQuality(cover), title, `${BASE_URL}${itemUrl}`)
                         result.data.push(detail)
                     }
                 })
@@ -913,8 +922,8 @@ class NetEase {
                 if (coverEl) {
                     let cover = coverEl.getAttribute("src")
                     //.replace("200y200", "500y500")
-                    if (cover) cover = getCoverByQuality(cover.split('?')[0])
-                    result.cover = cover
+                    if (cover) cover = cover.split('?')[0]
+                    result.cover = getCoverByQuality(cover)
                 }
                 const subtitleEl = doc.querySelector(".n-songtb .u-title .sub")
                 if (subtitleEl) {

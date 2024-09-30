@@ -16,6 +16,24 @@ const { getDoc, getJson, postJson } = nets
 const { APIPermissions, access } = permissions
 
 
+const getCoverByQuality = (url) => {
+    if(!url) return ''
+
+    const keywords = ['&name=small', '&name=medium', '&name=large']
+    let index = -1
+    for(let i = 0; i < keywords.length; i++) {
+        index = i
+        if(url.includes(keywords[i])) break
+    }
+    const keyword = keywords[index]
+    return getImageUrlByQuality([
+        url.replace(keyword, keywords[0]),
+        url.replace(keyword, keywords[1]),
+        url.replace(keyword, keywords[2]),
+        url.replace(keyword, keywords[2]),
+        url.replace(keyword, keywords[2])
+    ])
+}
 
 
 class Ximalaya {
@@ -117,7 +135,7 @@ class Ximalaya {
                 result.total = Math.ceil(total / pageSize)
                 list.forEach(item => {
                     const { id, name, coverSmall, coverLarge, categoryName, programId, programScheduleId } = item
-                    const cover = (coverLarge || coverSmall)
+                    const cover = getCoverByQuality(coverLarge || coverSmall)
                     const playlist = new Playlist(id, Ximalaya.CODE, cover, name)
                     playlist.programId = programId
                     playlist.type = Playlist.FM_RADIO_TYPE
@@ -191,8 +209,8 @@ class Ximalaya {
                         const radioPlaylist = radiosResult.data[i]
                         if (toTrimString(id) == toTrimString(radioPlaylist.id)
                             && radioPlaylist.data && radioPlaylist.data.length > 0) {
-                            const { url } = radioPlaylist.data[0]
-                            Object.assign(track, { url })
+                            const { url, cover } = radioPlaylist.data[0]
+                            Object.assign(track, { url, cover: getCoverByQuality(cover) })
                             break
                         }
                     }

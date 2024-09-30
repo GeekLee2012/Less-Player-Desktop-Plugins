@@ -3,7 +3,7 @@
  * @version 1.0.0
  * @author WhoamI
  * @about 
- * @repository 
+ * @repository www.baidu.com
  */
 
 /* 默认提供的插件API */

@@ -30,40 +30,66 @@ const moduleReq = (module, method, param) => {
     return { module, method, param }
 }
 
-const changeImageSize = (url, oSize, nSize) => {
-    oSize = oSize || 300
-    nSize = nSize || 600
-    if (!url) return null
-    return url.replace(`/${oSize}?n=1`, `/${nSize}?n=1`)
-}
-
 const getArtistCover = (artistmid, size) => {
-    if (!artistmid) return null
-    size = size || 500
+    if (!artistmid) return ''
+
+    size = size || 300
     return `http://y.gtimg.cn/music/photo_new/T001R${size}x${size}M000${artistmid}.jpg`
 }
 
 const getAlbumCover = (albummid, size) => {
-    if (!albummid) return null
-    size = size || 500
+    if (!albummid) return ''
+
+    size = size || 300
     return `https://y.qq.com/music/photo_new/T002R${size}x${size}M000${albummid}.jpg?max_age=2592000`
 }
 
-const getCoverByQuality = ({ artistMid, albumMid }) => {
+//TODO 强行转换，可能导致url不存在
+const getCoverByQuality = ({ artistMid, albumMid, cover, sizes }) => {
+    sizes = sizes || [180, 300, 500, 800, 1000]
+    let index = 0
     if (artistMid) {
         return getImageUrlByQuality([
-            getArtistCover(artistMid, 300),
-            getArtistCover(artistMid),
-            getArtistCover(artistMid, 800)
-        ])
-    } else if (albumMid) {
-        return getImageUrlByQuality([
-            getAlbumCover(albumMid, 300),
-            getAlbumCover(albumMid),
-            getAlbumCover(albumMid, 800)
+            getArtistCover(artistMid, sizes[index++]),
+            getArtistCover(artistMid, sizes[index++]),
+            getArtistCover(artistMid, sizes[index++]),
+            getArtistCover(artistMid, sizes[index++]),
+            getArtistCover(artistMid, sizes[index++])
         ])
     }
-    return null
+    if (albumMid) {
+        return getImageUrlByQuality([
+            getAlbumCover(albumMid, sizes[index++]),
+            getAlbumCover(albumMid, sizes[index++]),
+            getAlbumCover(albumMid, sizes[index++]),
+            getAlbumCover(albumMid, sizes[index++]),
+            getAlbumCover(albumMid, sizes[index++])
+        ])
+    }
+    if(cover) {
+        let matched = cover.match(/\/\d{3,4}\?n=1/)
+        if(matched) {
+            return getImageUrlByQuality([
+                cover.replace(matched[0], `/${sizes[index++]}?n=1`),
+                cover.replace(matched[0], `/${sizes[index++]}?n=1`),
+                cover.replace(matched[0], `/${sizes[index++]}?n=1`),
+                cover.replace(matched[0], `/${sizes[index++]}?n=1`),
+                cover.replace(matched[0], `/${sizes[index++]}?n=1`)
+            ])
+        }
+        //http://y.gtimg.cn/music/photo_new/T015R640x360M000003qFPPK1D0stP.jpg
+        matched = cover.match(/\/T015R\d{3,4}x\d{3,4}M/)
+        if(matched) {
+            return getImageUrlByQuality([
+                cover.replace(matched[0], `/T015R${sizes[index]}x${sizes[index++]}M`),
+                cover.replace(matched[0], `/T015R${sizes[index]}x${sizes[index++]}M`),
+                cover.replace(matched[0], `/T015R${sizes[index]}x${sizes[index++]}M`),
+                cover.replace(matched[0], `/T015R${sizes[index]}x${sizes[index++]}M`),
+                cover.replace(matched[0], `/T015R${sizes[index]}x${sizes[index++]}M`),
+            ])
+        }
+    }
+    return cover || ''
 }
 
 const getTrackTypeMeta = (typeName) => {
@@ -497,6 +523,14 @@ class QQ {
                 }
             })
             const result = { platform: QQ.CODE, data: [], orders: [] }
+            const recommandCategory = new Category('推荐', 0)
+            recommandCategory.add('默认', QQ.DEFAULT_CATE)
+            recommandCategory.add('排行榜', QQ.TOPLIST_CODE)
+            recommandCategory.add('电台', QQ.RADIO_CODE)
+
+            //是否允许更多推荐
+            const enableMoreRecommand = false
+            
             postJson(url, reqBody).then(json => {
                 const recommandTagNames = [
                     '国语', '英语', '粤语',
@@ -508,7 +542,6 @@ class QQ {
                     '00年代',  '90年代', 
                     '法语', '睡前']
                 const ignoreTagNames = ['AI歌单']
-                const recommandCategory = new Category('推荐', 0)
                 result.data.push(recommandCategory)
 
                 const list = json.req_1.data.v_group
@@ -520,7 +553,9 @@ class QQ {
                     items.forEach(item => {
                         const { id, name } = item
                         if (ignoreTagNames.includes(name)) return
-                        if (recommandTagNames.includes(name)) recommandCategory.add(name, id)
+                        if (enableMoreRecommand && recommandTagNames.includes(name)) {
+                            recommandCategory.add(name, id)
+                        }
                         category.add(name, id)
                     })
                     result.data.push(category)
@@ -528,11 +563,6 @@ class QQ {
                 //随机打乱推荐分类
                 //shuffle(recommandCategory.data)
                 
-                const firstCate = result.data[0]
-                firstCate.data.splice(0, 0, { key: '默认', value: QQ.DEFAULT_CATE })
-                firstCate.data.splice(1, 0, { key: '排行榜', value: QQ.TOPLIST_CODE })
-                firstCate.data.splice(2, 0, { key: '电台', value: QQ.RADIO_CODE })
-                //firstCate.data.splice(4, 0, { key: '最新', value: QQ.NEW_CODE })
                 resolve(result)
             })
         })
@@ -554,7 +584,7 @@ class QQ {
                     group.toplist.forEach(item => {
                         const id = QQ.TOPLIST_PREFIX + item.topId
                         const cover = item.frontPicUrl || item.headPicUrl
-                        const detail = new Playlist(id, QQ.CODE, cover, item.title)
+                        const detail = new Playlist(id, QQ.CODE, getCoverByQuality({ cover }), item.title)
                         detail.about = item.intro
                         result.data.push(detail)
                     })
@@ -577,7 +607,7 @@ class QQ {
                 result.id = playlist.topId
                 result.platform = QQ.CODE
                 result.title = playlist.title
-                result.cover = playlist.frontPicUrl || playlist.headPicUrl
+                result.cover = getCoverByQuality({ cover: (playlist.frontPicUrl || playlist.headPicUrl) })
                 result.about = playlist.intro
 
                 let songs = json.req_1.data.songInfoList || []
@@ -602,7 +632,7 @@ class QQ {
                     }
                     
                     const duration = (song.interval || 0) * 1000
-                    const cover = getCoverByQuality({ albumMid: album.id }) || song.cover
+                    const cover = getCoverByQuality({ albumMid: album.id }) || getCoverByQuality({ cover: song.cover })
                     const tId = song.mid || song.songMid
                     const tTitle = song.name || song.title
                     const track = new Track(tId, QQ.CODE, tTitle, artist, album, duration, cover)
@@ -721,7 +751,7 @@ class QQ {
                     const list = json.data.list
                     list.forEach(item => {
                         const cover = item.imgurl
-                        const playlist = new Playlist(item.dissid, QQ.CODE, cover, item.dissname)
+                        const playlist = new Playlist(item.dissid, QQ.CODE, getCoverByQuality({ cover }), item.dissname)
                         playlist.about = item.introduction
                         playlist.playCount = item.listennum
                         result.data.push(playlist)
@@ -767,8 +797,8 @@ class QQ {
                 const list = content.v_item
                 list.forEach(lItem => {
                     const item = lItem.basic
-                    const cover = getImageUrlByQuality([item.cover.small_url, item.cover.medium_url, item.cover.big_url])
-                    const playlist = new Playlist(item.tid, QQ.CODE, cover, item.title)
+                    const cover = item.cover.medium_url || item.cover.big_url || item.cover.small_url 
+                    const playlist = new Playlist(item.tid, QQ.CODE, getCoverByQuality({ cover }), item.title)
                     playlist.about = item.desc
                     playlist.playCount = item.play_cnt
                     playlist.total = item.song_cnt
@@ -800,11 +830,7 @@ class QQ {
                 result.dissid = playlist.dissid
                 result.title = playlist.dissname
 
-                result.cover = getImageUrlByQuality([
-                    playlist.logo,
-                    playlist.logo,
-                    changeImageSize(playlist.logo, 300, 600) //size=800不存在
-                ])
+                result.cover = getCoverByQuality({ cover: playlist.logo, sizes: [180, 300, 600, 600, 1000 ] })
                 result.about = playlist.desc
 
                 const songs = playlist.songlist
@@ -852,20 +878,8 @@ class QQ {
                         break
                     }
                 }
+                //Object.assign(result, { cover: getCoverByQuality() })
                 resolve(result)
-
-                /*
-                QQ.getVKeyJson(trackInfo).then(json => {
-                    const { data } = json.req_1
-                    const urlInfo = data.midurlinfo[0]
-                    const vkey = urlInfo.vkey.trim()
-
-                    if (vkey.length > 0) {
-                        result.url = data.sip[0] + urlInfo.purl
-                    }
-                    resolve(result)
-                })
-                */
             })
         })
     }
@@ -1227,12 +1241,8 @@ class QQ {
             {
                 getList: json => json.req_1.data.body.songlist,
                 mapItem: item => {
-                    let cover = item.imgurl
-                    cover = getImageUrlByQuality([
-                        cover,
-                        cover,
-                        changeImageSize(cover, 300, 600) //size=800不存在
-                    ])
+                    const sizes = [180, 300, 600, 600, 1000]
+                    const cover = getCoverByQuality({ cover: item.imgurl, sizes })
                     const playlist = new Playlist(item.dissid, QQ.CODE, cover, item.dissname)
                     //playlist.about = item.introduction
                     return playlist
@@ -1284,7 +1294,7 @@ class QQ {
                     platform: QQ.CODE,
                     title: item.mv_name,
                     subtitle: item.singer_name,
-                    cover: item.mv_pic_url,
+                    cover: getCoverByQuality({ cover: item.mv_pic_url }),
                     type: Playlist.VIDEO_TYPE,
                     publicTime: item.publish_date,
                     pay: (item.pay > 0),

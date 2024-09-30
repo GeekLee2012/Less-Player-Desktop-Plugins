@@ -27,12 +27,61 @@ const moduleReq = (module, method, param) => {
     return { module, method, param }
 }
 
-const getAlbumCover = (albummid) => {
-    return albummid ? `http://y.gtimg.cn/music/photo_new/T002R500x500M000${albummid}.jpg` : null
+const resizeCoverInUrl = (url, oSize, nSize) => {
+    oSize = oSize || 300
+    nSize = nSize || 600
+    return url ? url.replace(`/${oSize}?n=1`, `/${nSize}?n=1`) : ''
 }
 
-const getArtistCover = (artistmid) => {
-    return artistmid ? `http://y.gtimg.cn/music/photo_new/T001R500x500M000${artistmid}.jpg` : null
+const getArtistCover = (artistmid, size) => {
+    if (!artistmid) return null
+    size = size || 300
+    return `http://y.gtimg.cn/music/photo_new/T001R${size}x${size}M000${artistmid}.jpg`
+}
+
+const getAlbumCover = (albummid, size) => {
+    if (!albummid) return null
+    size = size || 300
+    return `https://y.qq.com/music/photo_new/T002R${size}x${size}M000${albummid}.jpg?max_age=2592000`
+}
+
+const getCoverByQuality = ({ artistMid, albumMid, cover, sizes }) => {
+    sizes = sizes || [180, 300, 500, 800, 1000]
+    let index = 0
+    if (artistMid) {
+        return getImageUrlByQuality([
+            getArtistCover(artistMid, sizes[index++]),
+            getArtistCover(artistMid, sizes[index++]),
+            getArtistCover(artistMid, sizes[index++]),
+            getArtistCover(artistMid, sizes[index++]),
+            getArtistCover(artistMid, sizes[index++])
+        ])
+    }
+    if (albumMid) {
+        return getImageUrlByQuality([
+            getAlbumCover(albumMid, sizes[index++]),
+            getAlbumCover(albumMid, sizes[index++]),
+            getAlbumCover(albumMid, sizes[index++]),
+            getAlbumCover(albumMid, sizes[index++]),
+            getAlbumCover(albumMid, sizes[index++])
+        ])
+    }
+    if(cover && cover.endsWith('?n=1')) {
+        try {
+            const parts = cover.split('/')
+            const size = parseInt(parts[parts.length - 1].replace('?n=1', ''))
+            return getImageUrlByQuality([
+                resizeCoverInUrl(cover, size, sizes[index++]),
+                resizeCoverInUrl(cover, size, sizes[index++]),
+                resizeCoverInUrl(cover, size, sizes[index++]),
+                resizeCoverInUrl(cover, size, sizes[index++]),
+                resizeCoverInUrl(cover, size, sizes[index++])
+            ])
+        } catch(error) {
+            console.log(error)
+        }
+    }
+    return cover || ''
 }
 
 const getTrackTypeMeta = (typeName) => {
@@ -301,7 +350,7 @@ class DouBan {
                 const { lst: list } = json.cgi.data
                 list.forEach(item => {
                     const { bizId: id, bizType, title, pic: cover } = item
-                    const playlist = new Playlist(id, DouBan.CODE, cover, title)
+                    const playlist = new Playlist(id, DouBan.CODE, getCoverByQuality({ cover }), title)
                     playlist.bizType = bizType
                     result.data.push(playlist)
                 })
@@ -422,7 +471,7 @@ class DouBan {
                 const { playlistVec: list } = json.cgi.data
                 list.forEach(item => {
                     const { id, playlistType: bizType, title, pic: cover } = item
-                    const playlist = new Playlist(id, DouBan.CODE, cover, title)
+                    const playlist = new Playlist(id, DouBan.CODE, getCoverByQuality({ cover }), title)
                     playlist.bizType = bizType
                     result.data.push(playlist)
                 })
@@ -446,7 +495,7 @@ class DouBan {
             }]
             list.forEach(item => {
                 const { id, title, cover } = item
-                const playlist = new Playlist(id, DouBan.CODE, cover, title)
+                const playlist = new Playlist(id, DouBan.CODE, getCoverByQuality({ cover }), title)
                 result.data.push(playlist)
             })
             resolve(result)
@@ -501,7 +550,7 @@ class DouBan {
 
                 list.forEach(item => {
                     const { bizId: id, bizType, title, pic: cover } = item
-                    const playlist = new Playlist(id, DouBan.CODE, cover, title)
+                    const playlist = new Playlist(id, DouBan.CODE, getCoverByQuality({ cover }), title)
                     playlist.bizType = bizType
                     result.data.push(playlist)
                 })
@@ -550,7 +599,7 @@ class DouBan {
                 list.forEach(item => {
                     const { bizId: id, bizType, name: title, pic: cover, subTitle } = item
                     const albumId = DouBan.RECOMMAND_ALBUM_CODE + '_' + id
-                    const album = new Album(albumId, DouBan.CODE, title, cover)
+                    const album = new Album(albumId, DouBan.CODE, title, getCoverByQuality({ cover }))
                     album.bizType = bizType
                     album.subtitle = subTitle
                     result.data.push(album)
@@ -784,7 +833,7 @@ class DouBan {
                             }
                             if (result.cover === '') {
                                 Object.assign(result, {
-                                    cover: getArtistCover(ar.mid)
+                                    cover: getCoverByQuality({ artistMid: ar.mid})
                                 })
                             }
                         }
@@ -792,7 +841,7 @@ class DouBan {
                     })
                     const album = { id: song.album.id, name: song.album.title }
                     const duration = song.interval * 1000
-                    const cover = getAlbumCover(song.album.mid)
+                    const cover = getCoverByQuality({ albumMid: song.album.mid})
                     const track = new Track(song.id, DouBan.CODE, song.name, artist, album, duration, cover)
                     track.mid = song.mid
                     track.pid = id
@@ -852,8 +901,9 @@ class DouBan {
             postJson(url, reqBody).then(json => {
                 const { albumList: list } = json.cgi.data
                 list.forEach(item => {
-                    const { id: albumId, type: bizType, name: title, pic: cover, artists, publish_date: publishTime } = item
+                    const { id: albumId, album_mid, type: bizType, name: title, pic, artists, publish_date: publishTime } = item
                     const artist = artists.map(ar => ({ id: ar.id, name: ar.name }))
+                    const cover = getCoverByQuality({ albumMid: album_mid }) || getCoverByQuality({ cover: pic })
                     const album = new Album(albumId, DouBan.CODE, title, cover, artist, null, publishTime)
                     album.bizType = bizType
                     result.data.push(album)
@@ -926,7 +976,7 @@ class DouBan {
                     const artist = songInfo.singer.map(ar => ({ id: ar.id, name: ar.name }))
                     const album = { id: songInfo.album.id, name: songInfo.album.title }
                     const duration = songInfo.interval * 1000
-                    const cover = getAlbumCover(songInfo.album.mid)
+                    const cover = getCoverByQuality({ albumMid: songInfo.album.mid})
                     const cacheTrack = new Track(songInfo.id, DouBan.CODE, songInfo.title, artist, album, duration, cover)
                     cacheTrack.mid = songInfo.mid
                     cacheTrack.channel = channel
@@ -986,7 +1036,7 @@ class DouBan {
                     const artist = song.singer.map(ar => ({ id: ar.id, name: ar.name }))
                     const album = { id: song.album.id, name: song.album.title }
                     const duration = song.interval * 1000
-                    const cover = getAlbumCover(song.album.mid)
+                    const cover = getCoverByQuality({ albumMid: song.album.mid })
                     const track = new Track(song.id, DouBan.CODE, song.name, artist, album, duration, cover)
                     track.mid = song.mid
                     track.pid = id

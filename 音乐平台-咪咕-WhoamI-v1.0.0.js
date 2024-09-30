@@ -9,7 +9,7 @@
 /* 默认提供的插件API */
 const { common, utils, crypto, events, nets, permissions } = lessAPI
 const { Category, Playlist, Track, Album, Lyric } = common
-const { toMmss, toMillis, toTrimString, transformUrl } = utils
+const { toMmss, toMillis, toTrimString, transformUrl, getImageUrlByQuality } = utils
 const { randomTextDefault, randomText, md5, sha1, sha256, aesEncryptDefault, rsaEncryptDefault } = crypto
 const { APIEvents, register, unregister } = events
 const { getDoc, getJson, postJson } = nets
@@ -68,6 +68,11 @@ const getPlayDetailSignedParams = (t) => {
   }
 }
 
+
+const getCoverByQuality = () => {
+  //TODO 暂不支持
+  return getImageUrlByQuality()
+}
 
 
 //自定义平台

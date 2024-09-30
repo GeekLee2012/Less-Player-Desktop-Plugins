@@ -39,6 +39,22 @@ const createSign = (e) => {
 }
 
 
+const getCoverByQuality = (url) => {
+    if (!url) return url
+
+    const index = url.indexOf('?')
+    if(index > -1) url = url.substring(0, index)
+    
+    return getImageUrlByQuality([
+        `${url}@w_180,h_180`,
+        `${url}@w_300,h_300`,
+        `${url}@w_500,h_500`,
+        `${url}@w_800,h_800`,
+        `${url}@w_1000,h_1000`,
+    ])
+}
+
+
 class QianQian {
     static CODE = 'qianqian'
 
@@ -82,8 +98,8 @@ class QianQian {
                 const data = pagination.result
                 result.total = Math.ceil(pagination.total / pageSize)
                 data.forEach(item => {
-                    const { id, title, pic: cover, desc: about, trackCount } = item
-                    //const cover = getCoverByQuality(item.img)
+                    const { id, title, pic, desc: about, trackCount } = item
+                    const cover = getCoverByQuality(pic)
                     const playlist = new Playlist(id, QianQian.CODE, cover, title)
                     playlist.total = trackCount
                     //playlist.playCount = parseInt(item.listencnt || 0)
@@ -108,9 +124,9 @@ class QianQian {
             const result = new Playlist(id, QianQian.CODE)
 
             getJson(url).then(json => {
-                const { title, pic: cover, desc: about, trackCount: total, trackList } = json.data
+                const { title, pic, desc: about, trackCount: total, trackList } = json.data
                 Object.assign(result, { 
-                    cover,
+                    cover: getCoverByQuality(pic),
                     title,
                     about,
                     total: total,
@@ -121,7 +137,7 @@ class QianQian {
                     const artist = item.artist.map(ar => ({ id: ar.artistCode, name: ar.name }))
                     const album = { id: item.albumAssetCode, name: item.albumTitle }
                     const duration = item.duration * 1000
-                    const cover = item.pic
+                    const cover = getCoverByQuality(item.pic)
 
                     const track = new Track(item.id, QianQian.CODE, item.title, artist, album, duration, cover)
                     track.pid = id
@@ -139,6 +155,7 @@ class QianQian {
     static playDetail(id, track) {
         return new Promise((resolve, reject) => {
             const result = new Track(id, QianQian.CODE)
+            Object.assign(result, { cover: getCoverByQuality(track.cover)})
             resolve(result)
         })
     }
@@ -164,8 +181,9 @@ class QianQian {
             const { sign, timestamp } = createSign(params)
             const url = `https://music.91q.com/v1/artist/info?sign=${sign}&artistCode=${id}&appid=${appid}&timestamp=${timestamp}`
             getJson(url).then(json => {
-                const { name: title, pic: cover, introduce } = json.data
+                const { name: title, pic, introduce } = json.data
                 const about = toTrimString(introduce).replace(/\n/g, '<br>')
+                const cover = getCoverByQuality(pic)
                 const result = { id, title, cover, about }
                 resolve(result)
             }, error => resolve(null)).catch(error => resolve(null))
@@ -192,7 +210,7 @@ class QianQian {
                     const artist = item.artist.map(ar => ({ id: ar.artistCode, name: ar.name }))
                     const album = { id: item.albumAssetCode, name: item.albumTitle }
                     const duration = item.duration * 1000
-                    const cover = item.pic
+                    const cover = getCoverByQuality(item.pic)
 
                     const track = new Track(item.id, QianQian.CODE, item.title, artist, album, duration, cover)
                     data.push(track)
@@ -225,7 +243,7 @@ class QianQian {
                 const data = []
                 list.forEach(item => {
                     const artist = item.artist.map(ar => ({ id: ar.artistCode, name: ar.name }))
-                    const cover = item.pic
+                    const cover = getCoverByQuality(item.pic)
                     const album = new Album(item.albumAssetCode, QianQian.CODE, item.title, cover, artist,
                         null, QianQian.transformReleaseDate(item.releaseDate), item.introduce)
                     data.push(album)
@@ -280,7 +298,7 @@ class QianQian {
                     const trackArtist = item.artist.map(ar => ({ id: ar.artistCode, name: ar.name }))
                     const trackAlbum = { id, name }
                     const duration = item.duration * 1000
-                    const trackCover = item.pic || cover
+                    const trackCover = getCoverByQuality(item.pic || cover)
                     const track = new Track(item.assetId, QianQian.CODE, item.title, trackArtist, trackAlbum, duration, trackCover)
                     track.payPlay = item.isVip
                     track.payDownload = item.isVip

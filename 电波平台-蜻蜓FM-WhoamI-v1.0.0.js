@@ -19,6 +19,26 @@ const { APIPermissions, access } = permissions
 //Lwrpu$K5oP
 const getSign = (src) => (hmacMd5(src, 'fpMn12&38f_2e'))
 
+const getCoverByQuality = (url) => {
+    if(!url) return ''
+
+    const index = url.indexOf('!')
+    return index > 0 ? getImageUrlByQuality([
+        url.substring(0, index) + '!200',
+        url.substring(0, index) + '!200',
+        url.substring(0, index) + '!400',
+        url.substring(0, index),
+        url.substring(0, index)
+    ]) : getImageUrlByQuality([
+        url + '!200',
+        url + '!200',
+        url + '!400',
+        url,    // > 400: 500、800
+        url
+    ])
+}
+
+
 
 class Qingting {
     static CODE = 'qingting'
@@ -62,7 +82,7 @@ class Qingting {
                 result.total = Math.ceil(json.total / 12)
                 list.forEach(item => {
                     const { id, title, cover, description } = item
-                    const playlist = new Playlist(Playlist.ANCHOR_RADIO_ID_PREFIX + id, Qingting.CODE, cover, title, null, description)
+                    const playlist = new Playlist(Playlist.ANCHOR_RADIO_ID_PREFIX + id, Qingting.CODE, getCoverByQuality(cover), title, null, description)
                     playlist.type = Playlist.ANCHOR_RADIO_TYPE
                     result.data.push(playlist)
                 })
@@ -87,7 +107,7 @@ class Qingting {
             postJson(url, reqBody).then(json => {
                 const { album, plist } = json.data.channelPage
                 const { name, desc, detail, img_url, program_count, podcasters } = album
-                const result = new Playlist(id, Qingting.CODE, img_url, name, null, desc)
+                const result = new Playlist(id, Qingting.CODE, getCoverByQuality(img_url), name, null, desc)
                 result.type = Playlist.ANCHOR_RADIO_TYPE
                 result.total = program_count
                 const artistName = podcasters && podcasters.length > 0 ? podcasters[0].name : '蜻蜓FM'
@@ -96,7 +116,7 @@ class Qingting {
                     const { id, title, duration, cover, playcount, update_time } = item
                     const artist = [{ id: '', name: artistName }]
                     const album = { id: result.id, name }
-                    const track = new Track(id, Qingting.CODE, title, artist, album, duration * 1000, cover)
+                    const track = new Track(id, Qingting.CODE, title, artist, album, duration * 1000, getCoverByQuality(cover))
                     track.pid = result.id
                     track.type = result.type
                     track.lyric.addLine('999:99.000', detail)
@@ -120,6 +140,7 @@ class Qingting {
             const sign = getSign(src)
 
             result.url = `https://audio.qtfm.cn${src}&sign=${sign}`
+            result.cover = getCoverByQuality(track.cover)
             resolve(result)
         })
     }

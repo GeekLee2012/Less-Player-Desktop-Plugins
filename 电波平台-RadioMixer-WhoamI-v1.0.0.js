@@ -2,7 +2,7 @@
  * @name 电波平台 - RadioMixer
  * @version 1.0.0
  * @author WhoamI
- * @about Online radio - listen live music for free without downloading.<br>收录世界多数主流广播电台，但网络延迟、播放成功率、音质等均一般。
+ * @about Online radio - listen live music for free without downloading. <br>收录世界多数主流广播电台，由于国内网络因素可能体验不佳。
  * @repository 
  */
 
