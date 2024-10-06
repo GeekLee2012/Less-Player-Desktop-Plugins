@@ -42,8 +42,11 @@ const createSign = (e) => {
 const getCoverByQuality = (url) => {
     if (!url) return url
 
-    const index = url.indexOf('?')
+    let index = url.indexOf('@')
     if(index > -1) url = url.substring(0, index)
+    index = url.indexOf('?')
+    if(index > -1) url = url.substring(0, index)
+
     
     return getImageUrlByQuality([
         `${url}@w_180,h_180`,
