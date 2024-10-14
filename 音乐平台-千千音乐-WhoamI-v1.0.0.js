@@ -333,7 +333,7 @@ export const activate = async () => {
     scopes: ['playlists', 'userhome', 'random'],
     artistTabs: [ 'all-songs', 'albums', 'about' ],
     //searchTabs: [],
-    weight: 6
+    weight: 5
   })
 
 

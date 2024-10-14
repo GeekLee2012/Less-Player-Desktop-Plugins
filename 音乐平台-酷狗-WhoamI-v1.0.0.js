@@ -995,7 +995,8 @@ class KuGou {
                     subtitle: item.SingerName,
                     duration: (item.Duration * 1000),
                     publishTime: item.PublishDate,
-                    playCount: item.MvHot
+                    playCount: item.MvHot,
+                    vcType: 0,
                 }))
                 const result = { platform: KuGou.CODE, offset, limit, page, data }
                 resolve(result)
@@ -1107,7 +1108,11 @@ class KuGou {
                 const result = { id, platform: KuGou.CODE, url: '' }
                 if(json.data) {
                     const urlData = json.data[toLowerCaseTrimString(id)]
-                    if(urlData) result.url = urlData.downurl
+                    if(urlData) {
+                        Object.assign(result, {
+                            url: urlData.downurl
+                        })
+                    }
                 }
                 resolve(result)
             })

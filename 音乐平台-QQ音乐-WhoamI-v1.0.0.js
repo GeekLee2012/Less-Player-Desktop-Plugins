@@ -1299,7 +1299,8 @@ class QQ {
                     publicTime: item.publish_date,
                     pay: (item.pay > 0),
                     duration: (item.duration * 1000),
-                    playCount: item.play_count
+                    playCount: item.play_count,
+                    vcType: 0,
                 })
             })
     }

@@ -780,7 +780,7 @@ export const activate = async () => {
     scopes: ['playlists', 'search', 'userhome'],
     artistTabs: ['hot-songs', 'all-songs', 'albums', 'about'],
     searchTabs: ['all-songs', 'playlists', 'albums'],
-    weight: 8
+    weight: 5
   })
 
   //获取UserAgent

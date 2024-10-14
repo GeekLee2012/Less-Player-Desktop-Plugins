@@ -736,7 +736,8 @@ class KuWo {
                         type: Playlist.VIDEO_TYPE,
                         subtitle: item.artist,
                         duration: (item.duration * 1000),
-                        playCount: item.mvPlayCnt
+                        playCount: item.mvPlayCnt,
+                        vcType: 0,
                     }
                 })
                 const result = { platform: KuWo.CODE, offset, limit, page, data }
@@ -852,7 +853,7 @@ export const activate = async () => {
   })
 
 
-  const { cookie, cross, secret }= await setupCookie()
+  const { cookie, cross, secret } = await setupCookie()
 
   access(APIPermissions.ADD_REQUEST_HANDLER, {
     id: KuWo.CODE,

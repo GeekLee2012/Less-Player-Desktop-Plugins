@@ -604,7 +604,8 @@ class NetEase {
                         type: Playlist.VIDEO_TYPE,
                         subtitle: NetEase.getVideoSutitle(item.creator),
                         duration: item.durationms,
-                        playCount: item.playTime
+                        playCount: item.playTime,
+                        vcType: 0,
                     }))
                 }
                 resolve(result)
@@ -620,6 +621,20 @@ class NetEase {
             subtitle = names.join('、')
         }
         return subtitle
+    }
+
+    static searchLyrics(keyword, offset, limit, page) {
+        keyword = toTrimString(keyword)
+        return new Promise((resolve, reject) => {
+            const url = 'https://music.163.com/eapi/cloudsearch/pc'
+            const param = searchParam_v1(keyword, 1006, 60)
+            const reqBody = eapi('/api/cloudsearch/pc', param)
+
+            const result = { platform: NetEase.CODE, offset, limit, page, data: [] }
+            postJson(url, reqBody).then(json => {
+                console.log(json)
+            })
+        })
     }
 
     //歌手分类
@@ -651,7 +666,7 @@ class NetEase {
         category.add('全部', '-1')
         category.add('其他', '0')
         const array = alphabet.split('')
-        for (var i = 0; i < array.length; i++) {
+        for (let i = 0; i < array.length; i++) {
             category.add(array[i], array[i].charCodeAt(0))
         }
         return category

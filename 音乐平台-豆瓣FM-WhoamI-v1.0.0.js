@@ -1138,7 +1138,7 @@ export const activate = async () => {
     types: ['playlists', 'albums'],
     scopes: ['playlists', 'userhome', 'random'],
     artistTabs: [ 'all-songs', 'albums','about' ],
-    weight: 8
+    weight: 6
   })
 
   //获取UserAgent
