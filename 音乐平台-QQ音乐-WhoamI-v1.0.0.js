@@ -46,7 +46,7 @@ const getAlbumCover = (albummid, size) => {
 
 //TODO 强行转换，可能导致url不存在
 const getCoverByQuality = ({ artistMid, albumMid, cover, sizes }) => {
-    sizes = sizes || [180, 300, 500, 800, 1000]
+    sizes = sizes || [180, 300, 600, 600, 1000]
     let index = 0
     if (artistMid) {
         return getImageUrlByQuality([
