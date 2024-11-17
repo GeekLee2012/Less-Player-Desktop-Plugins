@@ -1,8 +1,8 @@
 /**
- * @name 音源 - Demo（空实现版）
+ * @name 开发者 - 音源 - Demo
  * @version 1.0.0
  * @author WhoamI
- * @about 空实现，什么也没有返回
+ * @about 本插件无法直接使用，为开发者Demo插件，普通用户请不要安装本插件
  * @repository 
  */
 
@@ -68,7 +68,7 @@ export const activate = () => {
     }]
   })
 
-  console.log('[ PLUGIN - Activated ] 音源 - Demo（空实现版）')
+  console.log('[ PLUGIN - Activated ] 开发者 - 音源 - Demo')
 }
 
 //插件停用
@@ -76,5 +76,5 @@ export const deactivate = () => {
   //归还权限
   access(APIPermissions.REMOVE_PLATFORM, Demo.CODE)
   access(APIPermissions.REMOVE_REQUEST_HANDLER, Demo.CODE)
-  console.log('[ PLUGIN - Deactivated ] 音源 - Demo（空实现版）')
+  console.log('[ PLUGIN - Deactivated ] 开发者 - 音源 - Demo')
 }
