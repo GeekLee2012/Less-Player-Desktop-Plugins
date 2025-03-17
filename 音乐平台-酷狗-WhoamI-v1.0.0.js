@@ -97,7 +97,6 @@ const getCoverUrlByQualityAndName = (cate, name) => {
 
 
 const jsonify = (text) => {
-    //text = text ? text.trim() : ''
     text = text.replace(/\/\/ \S*/g, '') //注释
         .replace(/\s/g, '') //空白符
         .replace(/'/g, '"')
@@ -727,6 +726,7 @@ class KuGou {
                 const coverEl = doc.querySelector('.sng_ins_1 .top img')
                 let cover = null
                 if (coverEl) cover = getCoverByQuality(coverEl.getAttribute('_src'))
+
                 const title = doc.querySelector('.sng_ins_1 .top .intro strong').textContent
                 const about = doc.querySelector('.sng_ins_1 #singer_content').textContent
 
@@ -735,6 +735,42 @@ class KuGou {
             })
         })
     }
+
+    static artistDetail_v1(id) {
+        return new Promise((resolve, reject) => {
+            //const url = `https://www.kugou.com/singer/${id}.html`
+            const url = `https://www.kugou.com/singer/info/${id}/`
+            console.log(url)
+
+            getDoc(url).then(doc => {
+                let key = 'var songsTotal'
+                const scripts = doc.getElementsByTagName('script')
+                let scriptText = null
+                for (var i = 0; i < scripts.length; i++) {
+                    const scriptCon = scripts[i].innerHTML
+                    if (scriptCon && scriptCon.includes(key)) {
+                        scriptText = scriptCon
+                        break
+                    }
+                }
+                if (scriptText) {
+                    const { singerID, singername, songsdata } = Function(scriptText + ' return { singerID, singername, songsdata }')()
+                    //const total = Math.ceil(parseInt(songdata.length) / limit)
+                    const result = { 
+                        id, 
+                        title: singername,
+                        cover: null,
+                        about: '',
+                        total: -1,
+                    }
+
+                    //const list = songsdata
+                    resolve(result)
+                }
+            })
+        })
+    }
+
 
     //歌手详情: 全部歌曲
     static artistDetailAllSongs(id, offset, limit, page) {

@@ -52,12 +52,17 @@ class Ximalaya {
 
     //全部电台分类
     static fmRadioCategories() {
+        return Ximalaya.fmRadioCategories_v1()
+    }
+
+    //全部电台分类
+    static fmRadioCategories_v0() {
         return new Promise((resolve, reject) => {
             const url = 'https://www.ximalaya.com/radio/'
 
             getDoc(url).then(doc => {
                 const result = { platform: Ximalaya.CODE, data: [], orders: [], multiMode: true }
-                const cateListWraps = doc.querySelectorAll(".category-list .all-wrap > .all")
+                const cateListWraps = doc.querySelectorAll(".category-list .all-wrap .all")
                 cateListWraps.forEach(wrapItem => {
                     const category = new Category()
                     result.data.push(category)
@@ -73,6 +78,43 @@ class Ximalaya {
                             value = value.split("/")[2]
                         }
                         category.add(name, value)
+                    })
+                })
+                resolve(result)
+            })
+        })
+    }
+
+    //全部电台分类
+    static fmRadioCategories_v1() {
+        return new Promise((resolve, reject) => {
+            const url = 'https://mobile.ximalaya.com/radio-first-page-app/homePage'
+
+            getJson(url).then(json => {
+                const result = { platform: Ximalaya.CODE, data: [], orders: [], multiMode: true }
+                const { data } = json
+                const { modules } = data
+                modules.forEach(item => {
+                    const { id, name, type, locations, categories } = item
+                    if(name != '找电台' || type != 'SEARCH') return
+
+                    const category1 = new Category('地区')
+                    result.data.push(category1)
+                    locations.forEach(item => {
+                        const { id, name, type } = item
+                        const _id = id > 10 ? id : type
+                        let key = name, value = `c${_id}`
+                        if(key == '全部地区') value = Ximalaya.VALUE_ALL
+                        category1.add(key, value)
+                    })
+
+                    const category2 = new Category('分类')
+                    result.data.push(category2)
+                    categories.forEach(item => {
+                        const { id, name } = item
+                        let key = name, value = `t${id}`
+                        if(key == '全部分类') value = Ximalaya.VALUE_ALL
+                        category2.add(key, value)
                     })
                 })
                 resolve(result)
@@ -100,7 +142,8 @@ class Ximalaya {
             Object.assign(result, { location, category })
 
             if (location != valueAll) {
-                const value = location.substring(1)
+                const offset = toTrimString(location).startsWith('c') ? 1 : 0
+                const value = location.substring(offset)
                 //格式: c110000
                 if (value.length > 1) {
                     result.locationId = value
@@ -109,7 +152,8 @@ class Ximalaya {
                 }
             }
             if (category != valueAll) {
-                const value = category.substring(1)
+                const offset = toTrimString(category).startsWith('t') ? 1 : 0
+                const value = category.substring(offset)
                 result.categoryId = value
             }
         } catch (error) {
