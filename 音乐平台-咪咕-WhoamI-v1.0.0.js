@@ -2,7 +2,7 @@
  * @name 音乐平台 - 咪咕
  * @version 1.0.0
  * @author WhoamI
- * @about 不支持直接独立播放，但配合其他平台可播放；<br>即当前平台仅提供歌单，其他平台提供音乐源。
+ * @about 已同步更新至最新版本，现支持独立播放；<br>若歌曲仍播放失败，一般为VIP版本、版权等问题。
  * @repository 
  */
 
@@ -74,691 +74,345 @@ const getCoverByQuality = () => {
   return getImageUrlByQuality()
 }
 
+const newDeviceId = () => {
+ return randomTextDefault(8).toUpperCase() 
+      + '-' + randomTextDefault(4).toUpperCase()
+      + '-' + randomTextDefault(4).toUpperCase()
+      + '-' + randomTextDefault(4).toUpperCase()
+      + '-' + randomTextDefault(12).toUpperCase()
+}
+
+const defaultConfig = { 
+  headers: { 
+    _Origin: 'https://music.migu.cn',
+    _Referer: 'https://music.migu.cn/',
+  } 
+}
+
+const getFullDefaultConfig = () => {
+  const { headers } = defaultConfig
+  return {
+    headers: {
+      ...headers,
+      channel: '014X031',
+      subchannel: '014X031',
+      logId: 'cfrom=&appId=h5',
+      appId: 'h5',
+      platform: 'H5',
+      deviceId: newDeviceId(),
+      ua: 'Android_migu',
+      version: '6.8.8',
+      activityId: 'MUSIC-WWW',
+      timestamp: Date.now(),
+    }
+  }
+}
+
 
 //自定义平台
 class Migu {
   static CODE = 'migu'
   static NEWEST_CODE = '1000000000'
-
+  static firstTagId = '1001076096'
 
   static async categories() {
-    const config = { 
-      headers: { 
-        _Referer: 'https://music.migu.cn/v3'
-      } 
-    }
+    return new Promise((resolve, reject) => {
+      const result = { platform: Migu.CODE, data: [], orders: [] }
+      const url = 'https://app.c.nf.migu.cn/pc/v1.0/template/musiclistplaza-taglist/release'
+      getJson(url).then(json => {
+        const { data } = json
+        let isFirstTagId = true
+        data.forEach(item => {
+          const { header, content } = item
+          const { actionUrl, title } = header
+          const cate = new Category(title, actionUrl)
+          content.forEach(subItem => {
+            const { texts } = subItem
+            cate.add(texts[0], texts[1])
 
-    const result = { platform: Migu.CODE, data: [], orders: [] }
-    const url = 'https://music.migu.cn/v3/music/playlist'
-    const doc = await getDoc(url, null, config)
-    const hottagEls = doc.querySelectorAll('.songlist-tag .hottag')
-    const hotCategory = new Category('热门')
-    hotCategory.add('最新', Migu.NEWEST_CODE)
-    result.data.push(hotCategory)
-    hottagEls.forEach(el => {
-      const aEl = el.querySelector('a')
-      const name = aEl.textContent
-      if(name == '更多') return
-      const href = aEl.getAttribute('href')
-      const tagId = href.split('=')[1]
-      hotCategory.add(name, tagId)
-    })
-    const moretagEls = doc.querySelectorAll('.songlist-tag .filter')
-    moretagEls.forEach(el => {
-      const cateName = el.querySelector('.tag-name').textContent
-      const category = new Category(cateName)
-      result.data.push(category)
-
-      let listEls = el.querySelectorAll('.ptag_normal .tag-list li')
-      listEls.forEach(liEl => {
-        const aEl = liEl.querySelector('a')
-        const name = aEl.textContent
-        if(name == '更多') return
-        const href = aEl.getAttribute('href')
-        const tagId = href.split('=')[1]
-        category.add(name, tagId)
+            if(isFirstTagId) {
+              Migu.firstTagId = texts[1]
+              isFirstTagId = false
+            }
+          })
+          result.data.push(cate)
+        })
+        resolve(result)
       })
-
-      listEls = el.querySelectorAll('.ptag_normal .container li')
-      listEls.forEach(liEl => {
-        const aEl = liEl.querySelector('a')
-        const name = aEl.textContent
-        if(name == '更多') return
-        const href = aEl.getAttribute('href')
-        const tagId = href.split('=')[1]
-        category.add(name, tagId)
-      })
-
     })
-    return result
   }
 
   static async square(cate, offset, limit, page, order) {
-    const config = { 
-      headers: { 
-        _Referer: 'https://music.migu.cn/v3/music/playlist'
-      } 
-    }
-
-    const result = { platform: Migu.CODE, cate, offset, limit, page, total: 0, data: [] }
-
-    if(cate == Migu.NEWEST_CODE) cate = ''
-    const cateInfo = cate ? `tagId=${cate}&` : ''
-    const url = `https://music.migu.cn/v3/music/playlist?${cateInfo}page=${page}`
-    const doc = await getDoc(url, null, config)
-    const listEls = doc.querySelectorAll('.song-list-cont li')
-    listEls.forEach(el => {
-      const coverEl = el.querySelector('.music-cover img')
-      const titleEl = el.querySelector('.song-list-name a')
-      const playCountEl = el.querySelector('.desc-text')
-      const playBtnEl = el.querySelector('.play-btn')
-
-      const id = toTrimString(playBtnEl && playBtnEl.getAttribute('data-id'))
-      const title = toTrimString(titleEl && titleEl.textContent)
-      const cover = transformUrl(coverEl && coverEl.getAttribute('data-original'))
-      const playCount = toTrimString(playCountEl && playCountEl.textContent)
-
-      const playlist = new Playlist(id, Migu.CODE, cover, title)
-      Object.assign(playlist, { playCount })
-      result.data.push(playlist)
+    return new Promise((resolve, reject) => {
+      cate = cate || Migu.firstTagId || '1001076096'
+      const result = { platform: Migu.CODE, cate, offset, limit, page, total: 0, data: [] }
+      const url = `https://app.c.nf.migu.cn/pc/v1.0/template/musiclistplaza-listbytag/release?pageNumber=${page}&templateVersion=2&tagId=${cate}`
+      getJson(url).then(json => {
+        const { contentItemList } = json.data
+        const { itemList } = contentItemList[1]
+        itemList.forEach(item => {
+          const { title, logEvent, imageUrl: cover } = item
+          const { contentId: id, } = logEvent
+          const playlist = new Playlist(id, Migu.CODE, cover, title)
+          //Object.assign(playlist, { playCount })
+          result.data.push(playlist)
+        })
+        //无法获取分页信息，暂时默认为100
+        Object.assign(result, { total: 100 })
+        resolve(result)
+      })
     })
-
-    const pageEls = doc.querySelectorAll('.page a')
-    pageEls.forEach(el => {
-      try {
-        if(!el.textContent) return
-        const total = parseInt(el.textContent)
-        Object.assign(result, { total })
-      } catch(error) {
-        console.log(error)
-      }
-    })
-    return result
   }
 
   static async playlistDetail(id, offset, limit, page) {
-    const pageInfo = page > 1 ? `?page=${page}` : ''
-    const url = `https://music.migu.cn/v3/music/playlist/${id}${pageInfo}`
-    const doc = await getDoc(url)
-
-    const infoEl = doc.querySelector('.mpd-playlist-info')
-    const coverEl = infoEl.querySelector('.thumb-img')
-    const titleEl = infoEl.querySelector('.title')
-    const introEl = infoEl.querySelector('.intro')
-    const aboutEl = infoEl.querySelector('.intro-details')
-
-    const cover = transformUrl(coverEl.getAttribute('src'))
-    const title = titleEl.textContent
-    const about = (aboutEl && aboutEl.textContent) || (introEl && introEl.getAttribute('title'))
-
-
-    const result = new Playlist(id, Migu.CODE, cover, title)
-    Object.assign(result, { about })
-
-    const listEls = doc.querySelectorAll('.songlist-body .row')
-    const data = []
-    listEls.forEach(el => {
-      const cid = el.getAttribute('data-cid')
-      const aid = el.getAttribute('data-aid')
-      const mid = el.getAttribute('data-mid')
-
-      const titleEl = el.querySelector('.song-name .song-name-txt')
-      const mvEl = el.querySelector('.song-name .flag-mv')
-      const artistEls = el.querySelectorAll('.song-singers a')
-      const albumEl = el.querySelector('.song-belongs a')
-
-      let index = -1, mv = null, album = null
-      const title = titleEl.getAttribute('title')
-      if(mvEl) {
-        const mvHref = mvEl.getAttribute('href')
-        index = mvHref.lastIndexOf('/')
-        mv = mvHref.substring(index + 1)
-      }
-      
-      const artist = []
-      if(artistEls) {
-        artistEls.forEach(arEl => {
-          const href = arEl.getAttribute('href')
-          index = href.lastIndexOf('/')
-          artist.push({
-            id: href.substring(index + 1),
-            name: arEl.textContent
+    return new Promise((resolve, reject) => {
+      let url = `https://app.c.nf.migu.cn/resource/playlist/v2.0?playlistId=${id}`
+      getJson(url).then(async json => {
+        const { musicListId, title, musicNum, originalImgUrl, imgItem, summary: about } = json.data
+        const { img } = imgItem
+        const cover = img || originalImgUrl
+        const result = new Playlist(id, Migu.CODE, cover, title)
+        Object.assign(result, { about })
+        
+        url = `https://app.c.nf.migu.cn/MIGUM3.0/resource/playlist/song/v2.0?pageNo=${page}&pageSize=50&playlistId=${id}`
+        const dataJson = await getJson(url, null, defaultConfig)
+        const { songList } = dataJson.data
+        songList.forEach(item => {
+          const { songId, songName, duration, mvId, resourceType, copyrightId, contentId, albumId, album: albumName, img1, img2, img3, singerList } = item
+          const album = { id: albumId, name: albumName }
+          const artist = (singerList || []).map(singer => {
+            const { id, name, img } = singer
+            return { id, name }
           })
+          const track = new Track(songId, Migu.CODE, songName, artist, album,)
+          Object.assign(track, {
+            cover: 'https://d.musicapp.migu.cn' + (img1 || img2 || img3),
+            duration: (duration * 1000),
+            //mv: mvId,
+            resourceType,
+            copyrightId,
+            contentId,
+            pid: id,
+          })
+          result.data.push(track)
         })
-      }
-
-      if(albumEl) {
-        const alHref = albumEl.getAttribute('href')
-        index = alHref.lastIndexOf('/')
-        album = { id: alHref.substring(index + 1), name: albumEl.textContent }
-      }
-
-      const track = new Track(cid, Migu.CODE, title, artist, album)
-      Object.assign(track, {
-        aid, mid, mv, pid: id
+        resolve(result)
       })
-      data.push(track)
     })
-    if (data && data.length > 0) result.data.push(...data)
-
-    const pageEls = doc.querySelectorAll('.page a')
-    pageEls.forEach(el => {
-      try {
-        if(!el.textContent) return
-        const totalPage = parseInt(el.textContent)
-        Object.assign(result, { totalPage })
-      } catch(error) {
-        console.log(error)
-      }
-    })
-    if(result.totalPage > 1) Object.assign(result, { total: -1 })
-    return result
   }
-
 
   static async playDetail(id, track) {
-    const result = { ...track }
-    const config = { 
-      headers: { 
-        _Referer: 'https://music.migu.cn/v3/music/player/audio'
-      } 
-    }
-
-    const { mid } = track
-    //封面
-    let url = `https://music.migu.cn/v3/api/music/audioPlayer/getSongPic?songId=${mid}`
-    let json = await getJson(url, null, config)
-    const { smallPic, mediumPic, largePic } = json 
-    const cover = transformUrl(mediumPic || smallPic || largePic)
-    Object.assign(result, { cover })
-
-    //歌词
-    url = `https://music.migu.cn/v3/api/music/audioPlayer/getLyric?copyrightId=${id}`
-    json = await getJson(url, null, config)
-    const { lyric, sbslyric, translatedLyric } = json
-    Object.assign(result, { lyric: Lyric.parseFromText(lyric) })
-
-    //播放url
-    const t = { rawType:2, raw:{ copyrightId: id, type:1, auditionsFlag:0 }}
-    const { dataType, data, secKey } = getPlayDetailSignedParams(t)
-    
-    url = `https://music.migu.cn/v3/api/music/audioPlayer/getPlayInfo?dataType=${dataType}&data=${data}&secKey=${secKey}`
-    json = await getJson(url, null, config)
-    const { returnCode, data: retData } = json
-    if(retData) Object.assign(result, { url: retData.playUrl })
-    
-    return result
+    return new Promise((resolve, reject) => {
+      const { resourceType, copyrightId, contentId, } = track
+      const url = `https://app.c.nf.migu.cn/MIGUM3.0/strategy/pc/listen/v1.0?netType=01&resourceType=${resourceType}&copyrightId=${copyrightId}&contentId=${contentId}&toneFlag=PQ&scene=`
+      getJson(url, null, getFullDefaultConfig()).then(json => {
+        const { url } = json.data || {}
+        Object.assign(track, { url })
+        resolve(track)
+      })
+    })
   }
 
-
   static async artistDetail(id) {
-    const result = { id, platform: Migu.CODE ,title: '未知歌手', cover: '', hotSongs: [], about: '' }
-    const url = `https://music.migu.cn/v3/music/artist/${id}`
-    const doc = await getDoc(url, null, { 
-      headers: {  
-        _Referer: 'https://music.migu.cn/v3/playlist', 
-      }
-    })
-    const infoEl = doc.querySelector('.artist-info')
-    const coverEl = infoEl.querySelector('.artist-avatar img')
-    const titleEl = infoEl.querySelector('.artist-name a')
-    const aboutEl = infoEl.querySelector('.artist-intro .content')
-
-    const cover = transformUrl(coverEl && coverEl.getAttribute('src'))
-    const title = toTrimString(titleEl && titleEl.textContent)
-    const about = toTrimString(aboutEl && aboutEl.textContent)
-    Object.assign(result, { cover, title, about })
-
-
-    const list = doc.querySelectorAll('.page-songlist .songlist-body .row')
-    const data = []
-    list.forEach(el => {
-      const id = el.getAttribute('data-cid')
-      const aid = el.getAttribute('data-aid')
-      const mid = el.getAttribute('data-mid')
-
-      const titleEl = el.querySelector('.song-name .song-name-txt')
-      const mvEl = el.querySelector('.song-name .flag-mv')
-      const artistEls = el.querySelectorAll('.song-singers a')
-      const albumEl = el.querySelector('.song-belongs a')
-
-      let index = -1, mv = null, album = null
-      const title = titleEl.getAttribute('title')
-      if(mvEl) {
-        const mvHref = mvEl.getAttribute('href')
-        index = mvHref.lastIndexOf('/')
-        mv = mvHref.substring(index + 1)
-      }
-      
-      const artist = []
-      if(artistEls) {
-        artistEls.forEach(arEl => {
-          const href = arEl.getAttribute('href')
-          index = href.lastIndexOf('/')
-          artist.push({
-            id: href.substring(index + 1),
-            name: arEl.textContent
-          })
+    return new Promise((resolve, reject) => {
+      const result = { id, platform: Migu.CODE , title: '未知歌手', cover: '', hotSongs: [], about: '' }
+      const url = `https://app.c.nf.migu.cn/pc/bmw/singer/info/v1.1?singerId=${id}`
+      getJson(url).then(json => {
+        const { contents } = json.data
+        const { contents: data } = contents[0]
+        const { txt, img, img2, img3 } = data[0]
+        Object.assign(result, {
+          title: txt || '未知歌手',
+          cover: img || img2 || img3,
         })
-      }
-
-      if(albumEl) {
-        const alHref = albumEl.getAttribute('href')
-        index = alHref.lastIndexOf('/')
-        album = { id: alHref.substring(index + 1), name: albumEl.textContent }
-      }
-
-      const track = new Track(id, Migu.CODE, title, artist, album)
-      Object.assign(track, {
-        aid, mid, mv
+        resolve(result)
       })
-      data.push(track)
     })
-    if (data && data.length > 0) result.hotSongs.push(...data)
-    return result
   }
 
   //歌手详情：全部歌曲
   static async artistDetailAllSongs(id,  offset, limit, page) {
-    const result = { id, platform: Migu.CODE, offset, limit, page, total: 0, totalPage: 1, data: [] }
-    const url = `https://music.migu.cn/v3/music/artist/${id}/song?page=${page}`
-    const doc = await getDoc(url, null, { 
-      headers: {  
-        _Referer: 'https://music.migu.cn/v3/playlist',
-      }
-    })
-
-    const list = doc.querySelectorAll('.page-songlist .songlist-body .row')
-    const data = []
-    list.forEach(el => {
-      const id = el.getAttribute('data-cid')
-      const aid = el.getAttribute('data-aid')
-      const mid = el.getAttribute('data-mid')
-
-      const titleEl = el.querySelector('.song-name .song-name-txt')
-      const mvEl = el.querySelector('.song-name .flag-mv')
-      const artistEls = el.querySelectorAll('.song-singers a')
-      const albumEl = el.querySelector('.song-belongs a')
-
-      let index = -1, mv = null, album = null
-      const title = titleEl.getAttribute('title')
-      if(mvEl) {
-        const mvHref = mvEl.getAttribute('href')
-        index = mvHref.lastIndexOf('/')
-        mv = mvHref.substring(index + 1)
-      }
-      
-      const artist = []
-      if(artistEls) {
-        artistEls.forEach(arEl => {
-          const href = arEl.getAttribute('href')
-          index = href.lastIndexOf('/')
-          artist.push({
-            id: href.substring(index + 1),
-            name: arEl.textContent
+    return new Promise((resolve, reject) => {
+      const result = { id, platform: Migu.CODE, offset, limit, page, total: 0, totalPage: 1, data: [] }
+      const url = `https://app.c.nf.migu.cn/pc/bmw/singer/song/v1.0?pageNo=${page}&singerId=${id}&type=1`
+      getJson(url).then(json => {
+        const { contents } = json.data
+        const { contents: list } = contents[0]
+        list.forEach(item => {
+          const { songItem } = item
+          const { songId, songName, duration, resourceType, copyrightId, contentId, albumId, album: albumName, img1, img2, img3, singerList } = songItem
+          const album = { id: albumId, name: albumName }
+          const artist = (singerList || []).map(singer => {
+            const { id, name, img } = singer
+            return { id, name }
           })
+          const track = new Track(songId, Migu.CODE, songName, artist, album,)
+          Object.assign(track, {
+            cover: 'https://d.musicapp.migu.cn' + (img1 || img2 || img3),
+            duration: (duration * 1000),
+            resourceType,
+            copyrightId,
+            contentId,
+          })
+          result.data.push(track)
         })
-      }
-
-      if(albumEl) {
-        const alHref = albumEl.getAttribute('href')
-        index = alHref.lastIndexOf('/')
-        album = { id: alHref.substring(index + 1), name: albumEl.textContent }
-      }
-
-      const track = new Track(id, Migu.CODE, title, artist, album)
-      Object.assign(track, {
-        aid, mid, mv
+        resolve(result)
       })
-      data.push(track)
     })
-    if (data && data.length > 0) result.data.push(...data) 
-    
-    const pageEls = doc.querySelectorAll('.page a')
-    pageEls.forEach(el => {
-      try {
-        if(!el.textContent) return
-        const totalPage = parseInt(el.textContent)
-        Object.assign(result, { totalPage })
-      } catch(error) {
-        console.log(error)
-      }
-    })
-    if(result.totalPage > 1) Object.assign(result, { total: -1 })
-
-    const sectionTitleEl = doc.querySelector('.artist-section-title span')
-    if(sectionTitleEl) {
-      const secTitle = sectionTitleEl.textContent
-      try {
-        const total = parseInt(secTitle.replace('（', '(').replace('）', ')').split('(')[1].split(')')[0])
-        Object.assign(result, { total })
-      } catch(error) {
-        console.log(error)
-      }
-    }
-    return result
   }
-
 
   //歌手详情: 专辑
   static async artistDetailAlbums(id, offset, limit, page) {
-    const result = { id, platform: Migu.CODE, offset, limit, page, total: 0, totalPage: 1, data: [] }
-    const url = `https://music.migu.cn/v3/music/artist/${id}/album?page=${page}`
-    const doc = await getDoc(url, null, { 
-      headers: {  
-        _Referer: 'https://music.migu.cn/v3/playlist',
-      }
-    })
-
-    const list = doc.querySelectorAll('.artist-album-list li')
-    const data = []
-    list.forEach(el => {
-      const coverEl = el.querySelector('.thumb-img')
-      const titleEl = el.querySelector('.album-name')
-      const artistEls = el.querySelectorAll('.album-singers .singer')
-
-      let index = -1
-      const alHref = titleEl.getAttribute('href')
-      index = alHref.lastIndexOf('/')
-      const albumId = alHref.substring(index + 1)
-
-      const title = titleEl.getAttribute('title')
-      const cover = transformUrl(coverEl && coverEl.getAttribute('data-original'))
-
-      const artist = []
-      if(artistEls) {
-        artistEls.forEach(arEl => {
-          const href = arEl.getAttribute('href')
-          index = href.lastIndexOf('/')
-          artist.push({
-            id: href.substring(index + 1),
-            name: arEl.textContent
+    return new Promise((resolve, reject) => {
+      const result = { id, platform: Migu.CODE, offset, limit, page, total: 0, totalPage: 1, data: [] }
+      const url = `https://app.c.nf.migu.cn/pc/bmw/singer/album/v1.0?pageNo=1&singerId=${id}`
+      getJson(url).then(json => {
+        const { contents: list } = json.data
+        list.forEach(item => {
+          const { resId: albumId, txt: title, txt2, txt3, img: cover, } = item
+          const artist = [{ id, name: txt2 }]
+          const album = new Album(albumId, Migu.CODE, title, cover, artist)
+          Object.assign(album, {
+            publishTime: txt3,
           })
+          result.data.push(album)
         })
-      }
-
-      const album = new Album(albumId, Migu.CODE, title, cover, artist)
-      data.push(album)
+        resolve(result)
+      })
     })
-    if (data && data.length > 0) result.data.push(...data) 
-    
-    const pageEls = doc.querySelectorAll('.page a')
-    pageEls.forEach(el => {
-      try {
-        if(!el.textContent) return
-        const totalPage = parseInt(el.textContent)
-        Object.assign(result, { totalPage })
-      } catch(error) {
-        console.log(error)
-      }
-    })
-    if(result.totalPage > 1) Object.assign(result, { total: -1 })
-
-    const sectionTitleEl = doc.querySelector('.artist-section-title span')
-    if(sectionTitleEl) {
-      const secTitle = sectionTitleEl.textContent
-      try {
-        const total = parseInt(secTitle.replace('（', '(').replace('）', ')').split('(')[1].split(')')[0])
-        Object.assign(result, { total })
-      } catch(error) {
-        console.log(error)
-      }
-    }
-    return result
   }
-
 
   //专辑详情
   static async albumDetail(id) {
-    const url = `https://music.migu.cn/v3/music/album/${id}`
-    const doc = await getDoc(url, null, { 
-      headers: {  
-        _Referer: 'https://music.migu.cn/v3/playlist', 
-      }
-    })
-
-    const infoEl = doc.querySelector('.mad-album-info')
-    const coverEl = infoEl.querySelector('.thumb-img')
-    const titleEl = infoEl.querySelector('.content .title')
-    const artistEls = infoEl.querySelectorAll('.singer-name a')
-    const companyEl = infoEl.querySelector('.content .pub-company')
-    const publishTimeEl = infoEl.querySelector('.content .pub-date')
-    const aboutEl = infoEl.querySelector('.content .intro .J_IntroInline')
-
-    const cover = transformUrl(coverEl && coverEl.getAttribute('src'))
-    const title = toTrimString(titleEl && titleEl.textContent)
-    const company = toTrimString(companyEl && companyEl.textContent).replace('发行公司：', '')
-    const publishTime = toTrimString(publishTimeEl && publishTimeEl.textContent).replace('发行时间：', '')
-    const about = toTrimString(aboutEl && aboutEl.textContent)
-
-    let index = -1
-    const artist = []
-    if(artistEls) {
-      artistEls.forEach(arEl => {
-        const href = arEl.getAttribute('href')
-        index = href.lastIndexOf('/')
-        artist.push({
-          id: href.substring(index + 1),
-          name: arEl.textContent
-        })
-      })
-    }
-
-    const result = new Album(id, Migu.CODE, title, cover, artist, company, publishTime, about)
-
-    const listEls = doc.querySelectorAll('.songlist-body .row')
-    const data = []
-    listEls.forEach(el => {
-      const cid = el.getAttribute('data-cid')
-      const aid = el.getAttribute('data-aid')
-      const mid = el.getAttribute('data-mid')
-
-      const titleEl = el.querySelector('.song-name .song-name-txt')
-      const mvEl = el.querySelector('.song-name .flag-mv')
-      const artistEls = el.querySelectorAll('.song-singers a')
-      const albumEl = el.querySelector('.song-belongs a')
-      const durationEl = el.querySelector('.song-duration')
-
-      let index = -1, mv = null, album = null
-      const tTitle = titleEl.getAttribute('title')
-      if(mvEl) {
-        const mvHref = mvEl.getAttribute('href')
-        index = mvHref.lastIndexOf('/')
-        mv = mvHref.substring(index + 1)
-      }
-      
-      const artist = []
-      if(artistEls) {
-        artistEls.forEach(arEl => {
-          const href = arEl.getAttribute('href')
-          index = href.lastIndexOf('/')
-          artist.push({
-            id: href.substring(index + 1),
-            name: arEl.textContent
+    return new Promise((resolve, reject) => {
+      let url = `https://app.c.nf.migu.cn/resource/album/v2.0?albumId=${id}`
+      getJson(url).then(async json => {
+        const { albumId, title, imgItems, singer, singerId, singerImgs, summary: about, publishTime, publishDate, publishCorp, publishCompany } = json.data
+        const { img: cover } = (imgItems[0] || imgItems[1] || imgItems[2] || {} )
+        const artist = [ { id: singerId, name: singer }]
+        const company = publishCorp || publishCompany
+        const result = new Album(id, Migu.CODE, title, cover, artist, company, publishTime, about)
+        
+        url = `https://app.c.nf.migu.cn/MIGUM3.0/resource/album/song/v2.0?pageNo=1&pageSize=200&albumId=${id}`
+        const songsJson = await getJson(url, null, defaultConfig)
+        const { songList } = songsJson.data
+        songList.forEach(item => {
+          const { songId, songName, duration, resourceType, copyrightId, contentId, albumId, album: albumName, img1, img2, img3, singerList } = item
+          const album = { id: albumId, name: albumName }
+          const artist = (singerList || []).map(singer => {
+            const { id, name, img } = singer
+            return { id, name }
           })
+          const track = new Track(songId, Migu.CODE, songName, artist, album,)
+          Object.assign(track, {
+            cover: 'https://d.musicapp.migu.cn' + (img1 || img2 || img3),
+            duration: (duration * 1000),
+            resourceType,
+            copyrightId,
+            contentId,
+          })
+          result.data.push(track)
         })
-      }
-
-      if(albumEl) {
-        const alHref = albumEl.getAttribute('href')
-        index = alHref.lastIndexOf('/')
-        album = { id: alHref.substring(index + 1), name: albumEl.textContent }
-      } else {
-        album = { id, name: title }
-      }
-
-      const duration = toMillis(toTrimString(durationEl && durationEl.textContent))
-
-      const track = new Track(cid, Migu.CODE, tTitle, artist, album)
-      Object.assign(track, {
-        aid, mid, mv, pid: id, duration
+        resolve(result)
       })
-      data.push(track)
     })
-    if (data && data.length > 0) result.data.push(...data)
-
-    const pageEls = doc.querySelectorAll('.page a')
-    pageEls.forEach(el => {
-      try {
-        if(!el.textContent) return
-        const totalPage = parseInt(el.textContent)
-        Object.assign(result, { totalPage })
-      } catch(error) {
-        console.log(error)
-      }
-    })
-    if(result.totalPage > 1) Object.assign(result, { total: -1 })
-    return result
   }
 
 
   //搜索歌曲
   static async searchSongs(keyword, offset, limit, page) {
-    const result = { platform: Migu.CODE, offset, limit, page, data: [] }
-    const url = getSearchUrl(keyword, page, 'song')
-    const doc = await getDoc(url, null, { 
-      headers: {  
-        _Referer: 'https://music.migu.cn/v3', 
-        _Cookie: `migu_cookie_id=${cookieId}` 
-      }
-    })
-   
-    const list = doc.querySelectorAll('.page-songlist .songlist-body .row')
-    const data = []
-    list.forEach(el => {
-      const id = el.getAttribute('data-cid')
-      const aid = el.getAttribute('data-aid')
-      const mid = el.getAttribute('data-mid')
-
-      const titleEl = el.querySelector('.song-name .song-name-txt')
-      const mvEl = el.querySelector('.song-name .flag-mv')
-      const artistEls = el.querySelectorAll('.song-singers a')
-      const albumEl = el.querySelector('.song-belongs a')
-
-      let index = -1, mv = null, album = null
-      const title = titleEl.getAttribute('title')
-      if(mvEl) {
-        const mvHref = mvEl.getAttribute('href')
-        index = mvHref.lastIndexOf('/')
-        mv = mvHref.substring(index + 1)
-      }
-      
-      const artist = []
-      if(artistEls) {
-        artistEls.forEach(arEl => {
-          const href = arEl.getAttribute('href')
-          index = href.lastIndexOf('/')
-          artist.push({
-            id: href.substring(index + 1),
-            name: arEl.textContent
+    keyword = toTrimString(keyword)
+    page = page || 1
+    return new Promise((resolve, reject) => {
+      const result = { platform: Migu.CODE, offset, limit, page, data: [] }
+      const url = `https://app.u.nf.migu.cn/pc/resource/song/item/search/v1.0?text=${keyword}&pageNo=${page}&pageSize=${limit}`
+      getJson(url).then(json => {
+        const list = json || []
+        list.forEach(item => {
+          const { songId, songName, duration, resourceType, copyrightId, contentId, albumId, album: albumName, img1, img2, img3, singerList } = item
+          const album = { id: albumId, name: albumName }
+          const artist = singerList.map(singer => {
+            const { id, name, img } = singer
+            return { id, name }
           })
+          const track = new Track(songId, Migu.CODE, songName, artist, album,)
+          Object.assign(track, {
+            cover: (img1 || img2 || img3),
+            duration: (duration * 1000),
+            resourceType,
+            copyrightId,
+            contentId,
+          })
+          result.data.push(track)
         })
-      }
-
-      if(albumEl) {
-        const alHref = albumEl.getAttribute('href')
-        index = alHref.lastIndexOf('/')
-        album = { id: alHref.substring(index + 1), name: albumEl.textContent }
-      }
-
-      const track = new Track(id, Migu.CODE, title, artist, album)
-      Object.assign(track, {
-        aid, mid, mv
+        resolve(result)
       })
-      data.push(track)
     })
-    if (data && data.length > 0) result.data.push(...data)
-    return result
   }
 
   //搜索歌单
   static async searchPlaylists(keyword, offset, limit, page) {
+    keyword = toTrimString(keyword)
+    return new Promise((resolve, reject) => {
       const result = { platform: Migu.CODE, offset, limit, page, data: [] }
-      const url = getSearchUrl(keyword, page, 'playlist')
-      const doc = await getDoc(url, null, { 
-        headers: {  
-          _Referer: 'https://music.migu.cn/v3', 
-          _Cookie: `migu_cookie_id=${cookieId}` 
-        }
+      const url = `https://app.u.nf.migu.cn/pc/v1.0/content/search_all.do?text=${keyword}&pageNo=${page}&pageSize=${limit}&searchSwitch={"songlist": 1}`
+      getJson(url).then(json => {
+        const { result: list } = json.songListResultData
+        list.forEach(item => {
+          const { id, name: title, musicListPicUrl: cover, playNum } = item
+          const playlist = new Playlist(id, Migu.CODE, cover, title)
+          Object.assign(playlist, { playCount: playNum })
+          result.data.push(playlist)
+        })
+        resolve(result)
       })
-     
-      const listEls = doc.querySelectorAll('#artist-playlist-cont li')
-      listEls.forEach(el => {
-        const coverEl = el.querySelector('.music-cover img')
-        const titleEl = el.querySelector('.song-list-name a')
-        const playCountEl = el.querySelector('.desc-text')
-        const playBtnEl = el.querySelector('.play-btn')
-
-        const id = toTrimString(playBtnEl && playBtnEl.getAttribute('data-id'))
-        const title = toTrimString(titleEl && titleEl.textContent)
-        const cover = transformUrl(coverEl && coverEl.getAttribute('data-original'))
-        const playCount = toTrimString(playCountEl && playCountEl.textContent)
-
-        const playlist = new Playlist(id, Migu.CODE, cover, title)
-        Object.assign(playlist, { playCount })
-        result.data.push(playlist)
-      })
-
-      const pageEls = doc.querySelectorAll('.page a')
-      pageEls.forEach(el => {
-        try {
-          if(!el.textContent) return
-          const total = parseInt(el.textContent)
-          Object.assign(result, { total })
-        } catch(error) {
-          console.log(error)
-        }
-      })
-      return result
+    })
   }
-
 
   //搜索专辑
   static async searchAlbums(keyword, offset, limit, page) {
+    keyword = toTrimString(keyword)
+    return new Promise((resolve, reject) => {
       const result = { platform: Migu.CODE, offset, limit, page, data: [] }
-      const url = getSearchUrl(keyword, page, 'album')
-      const doc = await getDoc(url, null, { 
-        headers: {  
-          _Referer: 'https://music.migu.cn/v3', 
-          _Cookie: `migu_cookie_id=${cookieId}` 
-        }
+      const url = `https://app.u.nf.migu.cn/pc/bmw/album/search/v1.0?text=${keyword}&pageNo=${page}&pageSize=${limit}`
+      getJson(url).then(json => {
+        const { result: list } = json.data
+        list.forEach(item => {
+          const { id, name: title, singer, imgItems, publishDate } = item
+          const artist = [{ id: '', name: singer }]
+          const cover = (imgItems[0] || imgItems[1] || imgItems[2] || {}).img
+          const album = new Album(id, Migu.CODE, title, cover, artist)
+          Object.assign(album, {
+            publishTime: publishDate
+          })
+          result.data.push(album)
+        })
+        resolve(result)
       })
+    })
+  }
 
-    const listEls = doc.querySelectorAll('#artist-album-cont li')
-    const data = []
-    listEls.forEach(el => {
-      const coverEl = el.querySelector('.thumb-img')
-      const titleEl = el.querySelector('.album-name')
-      const artistEls = el.querySelectorAll('.album-singers .singer')
-      const publishTimeEl = el.querySelector('.album-release-date')
-
-      let index = -1
-      const alHref = titleEl.getAttribute('href')
-      index = alHref.lastIndexOf('/')
-      const albumId = alHref.substring(index + 1)
-
-      const title = toTrimString(titleEl && titleEl.textContent)
-      const cover = transformUrl(coverEl && coverEl.getAttribute('data-original'))
-      const publishTime = toTrimString(publishTimeEl && publishTimeEl.textContent)
-
-      const artist = []
-      if(artistEls) {
-        artistEls.forEach(arEl => {
-          const href = arEl.getAttribute('href')
-          index = href.lastIndexOf('/')
-          artist.push({
-            id: href.substring(index + 1),
-            name: arEl.textContent
+  //搜索歌手
+  static async searchArtists(keyword, offset, limit, page) {
+    keyword = toTrimString(keyword)
+    return new Promise((resolve, reject) => {
+      const result = { platform: Migu.CODE, offset, limit, page, data: [] }
+      const url = `https://app.u.nf.migu.cn/pc/resource/search/singer/v1.0?text=${keyword}`
+      getJson(url).then(json => {
+        const { data: list } = json
+        list.forEach(item => {
+          const { singerId, singer, imgs, } = item
+          const cover = (imgs[0] || imgs[1] || imgs[2] || {}).img
+          result.data.push({
+            id: singerId,
+            platform: Migu.CODE,
+            title: singer,
+            cover,
           })
         })
-      }
-
-      const album = new Album(albumId, Migu.CODE, title, cover, artist)
-      Object.assign(album, { publishTime })
-      data.push(album)
+        resolve(result)
+      })
     })
-    if (data && data.length > 0) result.data.push(...data)
-    return result
   }
 
 }
@@ -777,9 +431,9 @@ export const activate = async () => {
     shortName: 'MG', 
     online: true, 
     types: ['playlists', 'artists', 'albums'], 
-    scopes: ['playlists', 'search', 'userhome'],
-    artistTabs: ['hot-songs', 'all-songs', 'albums', 'about'],
-    searchTabs: ['all-songs', 'playlists', 'albums'],
+    scopes: ['playlists', 'search', 'userhome', 'united'],
+    artistTabs: ['all-songs', 'albums', 'about'],
+    searchTabs: ['all-songs', 'playlists', 'albums', 'artists'],
     weight: 5
   })
 
@@ -792,6 +446,7 @@ export const activate = async () => {
     id: Migu.CODE,
     hosts: ['migu.cn'],
     defaultHeaders: {
+        Origin: 'https://music.migu.cn',
         Referer: 'https://music.migu.cn/'
     },
     includes: [{

@@ -30,15 +30,16 @@ const drawSpectrum = (canvas, { freqData, freqBinCount, sampleRate, analyser, sp
 
     if (!freqData || freqData.length < 1) return
     const dataLen = freqData.length
-    let barWidth = 3.5, barHeight = null, x = 2, spacing = 3, step = 2
+    let barWidth = 3.5, barHeight = null, x = 2, spacing = 3, step = 1
     //barWidth = (cWidth / (dataLen * 3))
     const flipBarHeight = 1, flipStep = 1
 
 
-    let freqCnt = 0
+    //let freqCnt = 0
     for (var i = 0; i < dataLen; i = i + step) {
         //数据量控制一下，减少点CPU占用
-        if (++freqCnt >= 80) break
+        //if (++freqCnt >= 80) break
+        if (x >= cWidth) break
         //if( (x + barWidth + spacing) >= cWidth) break
         //step = i >= (dataLen / 2) && i <= (dataLen * 3 / 4) ? 1 : 2
 
