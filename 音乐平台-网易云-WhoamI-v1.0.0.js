@@ -1024,7 +1024,7 @@ export const activate = async () => {
     shortName: 'WY',
     online: true,
     types: ['playlists', 'artists', 'albums', 'anchor-radios', 'videos'],
-    scopes: ['playlists', 'artists', 'albums', 'radios', 'search', 'userhome', 'random', 'united'],
+    scopes: ['playlists', 'artists', 'albums', 'radios', 'search', 'userhome', 'random', 'united', 'resource-search'],
     artistTabs: [ 'hot-songs', 'albums','about' ],
     searchTabs: [ 'all-songs', 'playlists', 'albums', 'artists', 'videos' ],
     weight: 8

@@ -431,7 +431,7 @@ export const activate = async () => {
     shortName: 'MG', 
     online: true, 
     types: ['playlists', 'artists', 'albums'], 
-    scopes: ['playlists', 'search', 'userhome', 'united'],
+    scopes: ['playlists', 'search', 'userhome', 'united', 'resource-search'],
     artistTabs: ['all-songs', 'albums', 'about'],
     searchTabs: ['all-songs', 'playlists', 'albums', 'artists'],
     weight: 5

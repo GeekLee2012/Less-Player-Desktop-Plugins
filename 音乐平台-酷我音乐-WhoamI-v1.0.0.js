@@ -91,6 +91,10 @@ const setupCookie = async () => {
 const KW_DEFAULT_COVER_URIS = ['/star/albumcover/300/30/92/3189025836.jpg']
 
 
+const getAlbumCoverUrl = (url) => {
+    return `https://img4.kuwo.cn/star/albumcover/${url}`
+}
+
 const getAlbumCoverByQuality = (url, sizes) => {
     if (!url) return url
     //https://img2.kuwo.cn/star/albumcover/500/s4s43/96/2244468602.jpg
@@ -108,6 +112,10 @@ const getAlbumCoverByQuality = (url, sizes) => {
         url.replace(matched[0], `/albumcover/${sizes[index++]}/`),
         url.replace(matched[0], `/albumcover/${sizes[index++]}/`)
     ])
+}
+
+const getArtistCoverUrl = (url) => {
+    return `https://img4.kuwo.cn/star/starheads/${url}`
 }
 
 const getArtistCoverByQuality = (url, sizes) => {
@@ -649,6 +657,11 @@ class KuWo {
                     const duration = parseInt(item.DURATION) * 1000
                     const id = item.MUSICRID.replace('MUSIC_', '')
                     const track = new Track(id, KuWo.CODE, item.SONGNAME, artist, album, duration)
+                    let cover = item.web_albumpic_short && getAlbumCoverUrl(item.web_albumpic_short)
+                    if(!cover) cover = item.web_artistpic_short && getArtistCoverUrl(item.web_artistpic_short)
+                    Object.assign(track, {
+                        cover: getAlbumCoverByQuality(cover),
+                    })
                     if (item.MVFLAG == "1") track.mv = id
                     return track
                 })
@@ -846,7 +859,7 @@ export const activate = async () => {
     shortName: 'KW',
     online: true,
     types: ['playlists', 'artists', 'albums', 'videos'],
-    scopes: ['playlists', 'artists', 'albums', 'search', 'userhome', 'random', 'united'],
+    scopes: ['playlists', 'artists', 'albums', 'search', 'userhome', 'random', 'united', 'resource-search'],
     artistTabs: [ 'all-songs', 'albums','about' ],
     searchTabs: [ 'all-songs', 'playlists', 'albums', 'artists', 'videos' ],
     weight: 7

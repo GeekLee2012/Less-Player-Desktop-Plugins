@@ -634,7 +634,7 @@ class QQ {
                     
                     const duration = (song.interval || 0) * 1000
                     const cover = getCoverByQuality({ albumMid: album.id }) || getCoverByQuality({ cover: song.cover })
-                    const tId = song.mid || song.songMid
+                    const tId = song.mid || song.songMid || song.songId
                     const tTitle = song.name || song.title
                     const track = new Track(tId, QQ.CODE, tTitle, artist, album, duration, cover)
                     track.pid = id
@@ -1512,7 +1512,7 @@ export const activate = async () => {
     shortName: 'QQ',
     online: true,
     types: ['playlists', 'artists', 'albums', 'videos'],
-    scopes: ['playlists', 'artists', 'albums', 'search', 'userhome', 'random', 'united'],
+    scopes: ['playlists', 'artists', 'albums', 'search', 'userhome', 'random', 'united', 'resource-search'],
     artistTabs: [ 'hot-songs', 'albums','about' ],
     searchTabs: [ 'all-songs', 'playlists', 'albums', 'artists', 'videos' ],
     weight: 8

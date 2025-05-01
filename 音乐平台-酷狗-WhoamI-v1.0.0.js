@@ -37,12 +37,16 @@ const resizeCoverInUrl = (url, size) => {
     //https://imge.kugou.com/stdmusic/240/20180712/20180712154305100613.jpg
     //http://imge.kugou.com/soft/collection/240/20210518/20210518180852210693.jpg
     //https://imgessl.kugou.com/fmlogov2/240/20220121124411107744.jpg
+    //http://imge.kugou.com/stdmusic/{size}/20150719/20150719010047203836.jpg
     size = size || 240
     
     if (url.includes('/temppic/')) {
         url = `https://imgessl.kugou.com/custom/${size}/` + url.split('/temppic/')[1]
     } else if (url.includes('/stdmusic/')) {
         url = `https://imge.kugou.com/stdmusic/${size}/` + url.split('/stdmusic/')[1]
+    }else if (url.includes('/{size}/')) {
+        const parts = url.split('{size}')
+        url = parts[0] + size + parts[1]
     }
     return url.replace(`/${size}/150/`, `/${size}/`)
         .replace(`/${size}/240/`, `/${size}/`)
@@ -939,7 +943,7 @@ class KuGou {
                     const artist = item.Singers
                     const album = { id: item.AlbumID, name: item.AlbumName }
                     const duration = item.Duration * 1000
-                    const cover = getCoverByQuality(item.pic)
+                    const cover = getCoverByQuality(item.pic || item.Image)
                     const track = new Track(item.ID, KuGou.CODE, item.SongName, artist, album, duration, cover)
                     track.hash = item.FileHash
                     track.mv = item.MvHash
@@ -1169,7 +1173,7 @@ export const activate = async () => {
     shortName: 'KG',
     online: true,
     types: ['playlists', 'artists', 'albums'],
-    scopes: ['playlists', 'artists', 'albums', 'search', 'userhome', 'random', 'united'],
+    scopes: ['playlists', 'artists', 'albums', 'search', 'userhome', 'random', 'united', 'resource-search'],
     artistTabs: [ 'all-songs', 'albums','about' ],
     searchTabs: [ 'all-songs', 'playlists', 'albums', 'videos' ],
     weight: 7

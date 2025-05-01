@@ -194,7 +194,7 @@ export const activate = async () => {
   access(APIPermissions.ADD_PLATFORM, { 
     code: Jango.CODE,
     vendor: Jango,
-    name: 'jango音乐',
+    name: 'Jango音乐',
     shortName: 'JG',
     online: true,
     types: ['playlists'],

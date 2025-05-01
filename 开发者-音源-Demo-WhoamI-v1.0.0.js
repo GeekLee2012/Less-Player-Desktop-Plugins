@@ -43,7 +43,7 @@ export const activate = () => {
     shortName: 'DM',
     online: true,
     types: [],
-    scopes: ['united'], //使用范围：统一平台，即歌曲无法播放时，
+    scopes: ['united', 'resource-search'], //使用范围：统一平台，即歌曲无法播放时，
     artistTabs: [],
     searchTabs: [],
     weight: 8
