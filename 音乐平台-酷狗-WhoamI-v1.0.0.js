@@ -661,38 +661,42 @@ class KuGou {
     //歌曲播放详情：url、cover、lyric等
     static playDetail(id, track) {
         return new Promise(async (resolve, reject) => {
-            const { hash, album, extraHash } = track
-            const albumId = album.id
-            const hashList = []
-            if(extraHash) {
-                Object.entries(extraHash).forEach(([key, value]) => {
-                    if(value) hashList.push(value)
-                })
-            }
-            hashList.push(hash)
-
             const result = new Track(id, KuGou.CODE)
-            for (var i = 0; i < hashList.length; i++) {
-                const _hash = hashList[i]
-                if (!_hash) continue
-
-                const dfid = randomTextDefault(24)
-                const mid = toUpperCaseTrimString(randomTextDefault(32))
-                const url = `https://wwwapi.kugou.com/yy/index.php?r=play/getdata&hash=${_hash}&dfid=${dfid}&appid=1014&mid=${mid}&platid=4&album_id=${albumId}&_=`
-
-                const json = await getJson(url)
-                const { play_url, img, lyrics, authors } = json.data
-                if ((play_url || '').trim().length > 0) {
-                    Object.assign(result, {
-                        url: play_url,
-                        cover: getCoverByQuality(img),
-                        lyric: Lyric.parseFromText(lyrics)
+            try {
+                const { hash, album, extraHash } = track
+                const albumId = album.id
+                const hashList = []
+                if(extraHash) {
+                    Object.entries(extraHash).forEach(([key, value]) => {
+                        if(value) hashList.push(value)
                     })
-                    if (authors) {
-                        result.artist = authors.map(ar => ({ id: ar.author_id, name: ar.author_name }))
-                    }
-                    break
                 }
+                hashList.push(hash)
+
+                for (var i = 0; i < hashList.length; i++) {
+                    const _hash = hashList[i]
+                    if (!_hash) continue
+
+                    const dfid = randomTextDefault(24)
+                    const mid = toUpperCaseTrimString(randomTextDefault(32))
+                    const url = `https://wwwapi.kugou.com/yy/index.php?r=play/getdata&hash=${_hash}&dfid=${dfid}&appid=1014&mid=${mid}&platid=4&album_id=${albumId}&_=`
+
+                    const json = await getJson(url)
+                    const { play_url, img, lyrics, authors } = json.data
+                    if ((play_url || '').trim().length > 0) {
+                        Object.assign(result, {
+                            url: play_url,
+                            cover: getCoverByQuality(img),
+                            lyric: Lyric.parseFromText(lyrics)
+                        })
+                        if (authors) {
+                            result.artist = authors.map(ar => ({ id: ar.author_id, name: ar.author_name }))
+                        }
+                        break
+                    }
+                }
+            } catch(error) {
+                console.log(error)
             }
             resolve(result)
             /*

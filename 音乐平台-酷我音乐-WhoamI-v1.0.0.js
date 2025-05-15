@@ -401,8 +401,12 @@ class KuWo {
             const url = `https://www.kuwo.cn/api/v1/www/music/playUrl?mid=${id}&type=music&httpsStatus=1&reqId=${reqId}&plat=web_www&from=`
             const result = new Track(id, KuWo.CODE)
             getJson(url, null, CONFIG).then(json => {
-                if (json.data) Object.assign(result, { url: json.data.url })
-                Object.assign(result, { cover: getCoverByQuality(cover) })
+                try {
+                    if (json.data) Object.assign(result, { url: json.data.url })
+                    Object.assign(result, { cover: getCoverByQuality(cover) })
+                } catch(error) {
+                    console.log(error)
+                }
                 resolve(result)
             }, error => resolve(result)).catch(error => resolve(result))
         })

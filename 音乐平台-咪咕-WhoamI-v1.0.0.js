@@ -331,7 +331,7 @@ class Migu {
         list.forEach(item => {
           const { songId, songName, duration, resourceType, copyrightId, contentId, albumId, album: albumName, img1, img2, img3, singerList } = item
           const album = { id: albumId, name: albumName }
-          const artist = singerList.map(singer => {
+          const artist = (singerList || []).map(singer => {
             const { id, name, img } = singer
             return { id, name }
           })

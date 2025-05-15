@@ -296,9 +296,13 @@ class NetEase {
                 const reqBody = weapi(param)
                 postJson(url, reqBody).then(json => {
                     const result = new Track(id)
-                    const song = json.data[0]
-                    result.url = song.url
-                    result.cover = getCoverByQuality(track.cover)
+                    try{
+                        const song = json.data[0]
+                        result.url = song.url
+                        result.cover = getCoverByQuality(track.cover)
+                    } catch(error) {
+                        console.log(error)
+                    }
                     resolve(result)
                 })
             })

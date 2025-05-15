@@ -866,20 +866,23 @@ class QQ {
                 })
             }
             getJson(url, reqBody).then(async (json) => {
-                const trackInfo = json.req_1.data.track_info
-                const types = ['320', '128', 'm4a']
-                for (var i = 0; i < types.length; i++) {
-                    const vkeyJson = await QQ.getVKeyJson(trackInfo, types[i])
-                    const { midurlinfo, sip } = vkeyJson.req_1.data
-                    const urlInfo = midurlinfo[0]
-                    const { vkey } = urlInfo
+                try {
+                    const trackInfo = json.req_1.data.track_info
+                    const types = ['320', '128', 'm4a']
+                    for (var i = 0; i < types.length; i++) {
+                        const vkeyJson = await QQ.getVKeyJson(trackInfo, types[i])
+                        const { midurlinfo, sip } = vkeyJson.req_1.data
+                        const urlInfo = midurlinfo[0]
+                        const { vkey } = urlInfo
 
-                    if ((vkey || '').trim().length > 0) {
-                        result.url = sip[0] + urlInfo.purl
-                        break
+                        if ((vkey || '').trim().length > 0) {
+                            result.url = sip[0] + urlInfo.purl
+                            break
+                        }
                     }
+                } catch(error) {
+                    console.log(error)
                 }
-                //Object.assign(result, { cover: getCoverByQuality() })
                 resolve(result)
             })
         })
