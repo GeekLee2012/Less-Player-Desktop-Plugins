@@ -403,7 +403,8 @@ class DouBan {
                 if (top) {
                     top.forEach(item => {
                         const { id, title1: title, pic: cover, color } = item
-                        const playlist = new Playlist(DouBan.MHZ_CODE + '_' + id, DouBan.CODE, null, title)
+                        const _id = DouBan.MHZ_CODE + '_' + id
+                        const playlist = new Playlist(_id, DouBan.CODE, null, title)
                         playlist.type = Playlist.NORMAL_RADIO_TYPE
                         const { R, G, B } = color
                         playlist.color = `rgb(${R},${G}, ${B})`
@@ -417,8 +418,9 @@ class DouBan {
                         radios.forEach(radio => {
                             const { id, title1, title2, color } = radio
                             const rtitle = (title1 == title2) ? title1 : `${title1} ${title2}`
+                            const _id = DouBan.MHZ_CODE + '_' + id
                             const title = `${stitle} ｜ ${rtitle}`
-                            const playlist = new Playlist(DouBan.MHZ_CODE + '_' + id, DouBan.CODE, null, title)
+                            const playlist = new Playlist(_id, DouBan.CODE, null, title)
                             playlist.type = Playlist.NORMAL_RADIO_TYPE
                             const { R, G, B } = color
                             playlist.color = `rgb(${R},${G}, ${B})`

@@ -376,7 +376,7 @@ class Migu {
       const result = { platform: Migu.CODE, offset, limit, page, data: [] }
       const url = `https://app.u.nf.migu.cn/pc/bmw/album/search/v1.0?text=${keyword}&pageNo=${page}&pageSize=${limit}`
       getJson(url).then(json => {
-        const { result: list } = json.data
+        const { result: list } = json.data || []
         list.forEach(item => {
           const { id, name: title, singer, imgItems, publishDate } = item
           const artist = [{ id: '', name: singer }]

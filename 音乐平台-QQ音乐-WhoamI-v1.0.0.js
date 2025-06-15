@@ -1518,6 +1518,7 @@ export const activate = async () => {
     scopes: ['playlists', 'artists', 'albums', 'search', 'userhome', 'random', 'united', 'resource-search'],
     artistTabs: [ 'hot-songs', 'albums','about' ],
     searchTabs: [ 'all-songs', 'playlists', 'albums', 'artists', 'videos' ],
+    resourceSearchTabs: [ 'all-songs', 'playlists', 'albums' ],
     weight: 8
   })
 

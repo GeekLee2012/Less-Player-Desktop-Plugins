@@ -13,15 +13,20 @@ const { APIPermissions, access } = permissions
 
 /* 插件接入规范区 */
 //插件启用
-export const activate = () => {
+export const activate = (plugin) => {
   //获取权限
   access(APIPermissions.OPEN_DEV_TOOLS)
   console.log('[ PLUGIN - Activated ] 开发者 - 工具 - DevTools')
 }
 
 //插件停用
-export const deactivate = () => {
+export const deactivate = (plugin) => {
   //归还权限
   access(APIPermissions.CLOSE_DEV_TOOLS)
   console.log('[ PLUGIN - Deactivated ] 开发者 - 工具 - DevTools')
+}
+
+//插件配置更新（可选函数，非需要时可不必定义该函数）
+export const optionsUpdated = (plugin) => {
+  
 }
